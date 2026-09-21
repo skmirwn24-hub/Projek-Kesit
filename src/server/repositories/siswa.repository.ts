@@ -7,14 +7,96 @@ import {
   PindahKelasSiswaInput,
 } from '@/server/validators/siswa.schema';
 
+export interface RekapanSiswaQueryOptions {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  filterStatus?: string;
+  filterLokasi?: string;
+  filterKelas?: string;
+  filterPelatih?: string;
+}
+
+export interface PaginatedRekapanSiswaResult {
+  data: RekapanSiswaView[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export async function getPaginatedRekapanSiswa(
+  role: KesitRole,
+  options: RekapanSiswaQueryOptions = {}
+): Promise<PaginatedRekapanSiswaResult> {
+  const supabase = await createClient();
+  const {
+    page = 1,
+    pageSize = 10,
+    search = '',
+    filterStatus = '',
+    filterLokasi = '',
+    filterKelas = '',
+    filterPelatih = '',
+  } = options;
+
+  const viewName = role === 'Pelatih' ? 'v_rekapan_siswa_pelatih' : 'v_rekapan_siswa';
+  let query = supabase.from(viewName).select('*', { count: 'exact' });
+
+  if (search.trim()) {
+    const q = search.trim();
+    // Using ILIKE supported by our GIN trigram indexes
+    query = query.or(`nama_lengkap.ilike.%${q}%,id_siswa.ilike.%${q}%,nama_wali.ilike.%${q}%`);
+  }
+
+  if (filterStatus) {
+    query = query.eq('status_siswa', filterStatus);
+  }
+
+  if (filterLokasi) {
+    query = query.eq('lokasi', filterLokasi);
+  }
+
+  if (filterKelas) {
+    query = query.eq('kelas', filterKelas);
+  }
+
+  if (filterPelatih) {
+    query = query.eq('pelatih_pemilik', filterPelatih);
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order('id_siswa', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    console.error(`Error fetching paginated ${viewName}:`, error);
+    throw new Error(error.message);
+  }
+
+  const totalCount = count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    data: (data || []) as RekapanSiswaView[],
+    totalCount,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
+
 export async function getRekapanSiswa(
   role: KesitRole,
-  pelatihId?: string | null
+  _pelatihId?: string | null
 ): Promise<RekapanSiswaView[]> {
   const supabase = await createClient();
 
   const viewName = role === 'Pelatih' ? 'v_rekapan_siswa_pelatih' : 'v_rekapan_siswa';
-  let query = supabase.from(viewName).select('*');
+  const query = supabase.from(viewName).select('*');
 
   const { data, error } = await query.order('id_siswa', { ascending: false });
 

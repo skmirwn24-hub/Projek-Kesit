@@ -35,8 +35,9 @@ export async function registerSiswa(
       siswaId: result?.siswa_id,
       idSiswa: result?.id_siswa,
     };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal mendaftarkan siswa.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal mendaftarkan siswa.';
+    return { success: false, error: message };
   }
 }
 
@@ -51,8 +52,9 @@ export async function updateSiswaBiodata(
   try {
     await siswaRepo.editBiodataSiswa(input);
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memperbarui biodata siswa.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memperbarui biodata siswa.';
+    return { success: false, error: message };
   }
 }
 
@@ -73,9 +75,39 @@ export async function moveSiswaClass(
   try {
     await siswaRepo.pindahKelasSiswa(sanitizedInput);
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memproses pindah kelas.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memproses pindah kelas.';
+    return { success: false, error: message };
   }
+}
+
+export async function fetchPaginatedRekapanSiswa(
+  userRole: KesitRole,
+  options: siswaRepo.RekapanSiswaQueryOptions = {}
+): Promise<siswaRepo.PaginatedRekapanSiswaResult> {
+  const result = await siswaRepo.getPaginatedRekapanSiswa(userRole, options);
+
+  // If Pelatih, mask payment information for privacy / access control
+  if (userRole === 'Pelatih') {
+    const maskedData = result.data.map((item) => ({
+      ...item,
+      harga_paket: 0,
+      biaya_request_pelatih: 0,
+      diskon: 0,
+      total_tagihan: 0,
+      nominal_dibayar: 0,
+      sisa_tagihan: 0,
+      status_pembayaran: null,
+      metode_pembayaran: null,
+      admin_penerima: null,
+    }));
+    return {
+      ...result,
+      data: maskedData,
+    };
+  }
+
+  return result;
 }
 
 export async function fetchRekapanSiswa(

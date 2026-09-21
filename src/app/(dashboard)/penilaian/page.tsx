@@ -10,9 +10,12 @@ import { getPelatihAction } from '@/server/actions/pelatih.actions';
 import { PenilaianPelatihView, Pelatih } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
+import { useToast } from '@/components/ui/toast';
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function PenilaianPelatihPage() {
   const { profile, role } = useAuth();
+  const toast = useToast();
   const [data, setData] = useState<PenilaianPelatihView[]>([]);
   const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +74,17 @@ export default function PenilaianPelatihPage() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Keyboard shortcut: Escape to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDetailItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Automatic Sanksi Calculations
@@ -168,7 +182,7 @@ export default function PenilaianPelatihPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pelatihId) {
-      alert('Pilih pelatih terlebih dahulu.');
+      toast.warning('Pilih pelatih terlebih dahulu.');
       return;
     }
     if (
@@ -178,7 +192,7 @@ export default function PenilaianPelatihPage() {
       komunikasi === '' ||
       administrasiLaporan === ''
     ) {
-      alert('Semua aspek penilaian wajib diisi.');
+      toast.warning('Semua aspek penilaian wajib diisi.');
       return;
     }
 
@@ -193,7 +207,7 @@ export default function PenilaianPelatihPage() {
         komunikasi: Number(komunikasi),
         administrasi_laporan: Number(administrasiLaporan),
         catatan: catatan.trim() || null,
-        dinilai_oleh: 'Owner KESIT',
+        dinilai_oleh: role === 'Owner' ? 'Owner KESIT' : `Admin (${displayName})`,
         diinput_oleh: displayName,
         kategori_pelanggaran: kategoriPelanggaran,
         detail_pelanggaran: detailPelanggaran.trim() || null,
@@ -203,19 +217,20 @@ export default function PenilaianPelatihPage() {
         nominal_denda: 0,
         sesi_tanpa_honor: parseInt(sanksiCalculation.sesiTanpaHonor) || 0,
         catatan_sanksi: catatanSanksi.trim() || null,
-        diputuskan_oleh: jenisSanksi !== 'Tidak Ada' ? 'Owner KESIT' : null,
+        diputuskan_oleh: jenisSanksi !== 'Tidak Ada' ? (role === 'Owner' ? 'Owner KESIT' : `Admin (${displayName})`) : null,
       });
 
       if (!res.success) {
-        alert(res.error || 'Gagal menyimpan penilaian.');
+        toast.error(res.error || 'Gagal menyimpan penilaian.');
         return;
       }
 
-      alert('Penilaian pelatih berhasil disimpan.');
+      toast.success('Penilaian pelatih berhasil disimpan.');
       resetForm();
       await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Terjadi kesalahan sistem.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -231,25 +246,31 @@ export default function PenilaianPelatihPage() {
 
       {/* STATISTIK */}
       <section className="stats-grid">
-        <div className="stat-card">
-          <span>Pelatih Pernah Dinilai</span>
-          <strong id="statTotalPelatih">{statTotal}</strong>
-        </div>
+        {loading ? (
+          <SkeletonCard count={4} />
+        ) : (
+          <>
+            <div className="stat-card">
+              <span>Pelatih Pernah Dinilai</span>
+              <strong id="statTotalPelatih">{statTotal}</strong>
+            </div>
 
-        <div className="stat-card">
-          <span>Memenuhi KKM</span>
-          <strong id="statMemenuhiKKM">{statMemenuhiKKM}</strong>
-        </div>
+            <div className="stat-card">
+              <span>Memenuhi KKM</span>
+              <strong id="statMemenuhiKKM">{statMemenuhiKKM}</strong>
+            </div>
 
-        <div className="stat-card">
-          <span>Belum Memenuhi KKM</span>
-          <strong id="statBelumKKM">{statBelumKKM}</strong>
-        </div>
+            <div className="stat-card">
+              <span>Belum Memenuhi KKM</span>
+              <strong id="statBelumKKM">{statBelumKKM}</strong>
+            </div>
 
-        <div className="stat-card">
-          <span>Sanksi Aktif</span>
-          <strong id="statSanksiAktif">{statSanksiAktif}</strong>
-        </div>
+            <div className="stat-card">
+              <span>Sanksi Aktif</span>
+              <strong id="statSanksiAktif">{statSanksiAktif}</strong>
+            </div>
+          </>
+        )}
       </section>
 
       {/* FORM PENILAIAN */}
@@ -630,6 +651,10 @@ export default function PenilaianPelatihPage() {
           </div>
         </div>
 
+        <div className="results-counter" style={{ fontSize: '13px', color: '#64748b', marginTop: '12px', padding: '0 4px' }}>
+          Menampilkan <strong>{riwayatFiltered.length}</strong> dari {data.length} riwayat penilaian
+        </div>
+
         <div className="table-wrapper">
           <table>
             <thead>
@@ -651,11 +676,7 @@ export default function PenilaianPelatihPage() {
 
             <tbody id="riwayatTableBody">
               {loading ? (
-                <tr>
-                  <td colSpan={12} className="loading-cell">
-                    Memuat riwayat penilaian...
-                  </td>
-                </tr>
+                <SkeletonTable rows={6} cols={12} />
               ) : riwayatFiltered.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="empty-cell">

@@ -7,7 +7,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "node scripts/migrate-and-seed.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed": "node scripts/seed.mjs",
+    "db:sync-prod": "node scripts/sync-prod-to-dev.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

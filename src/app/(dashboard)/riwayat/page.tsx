@@ -6,6 +6,7 @@ import { getRiwayatAction } from '@/server/actions/riwayat.actions';
 import { RiwayatPerubahanSiswa } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function RiwayatPage() {
   const { profile, role } = useAuth();
@@ -45,6 +46,17 @@ export default function RiwayatPage() {
     loadData();
   }, []);
 
+  // Keyboard shortcut: Escape to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDetailItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Filter logic matching legacy
   const dataFiltered = useMemo(() => {
     return data.filter((item) => {
@@ -74,8 +86,8 @@ export default function RiwayatPage() {
     });
   }, [data, search, filterJenis, filterBulan, filterTahun]);
 
-  // Statistics
-  const statTotal = dataFiltered.length;
+  // Statistics: Master data agregat (stabil)
+  const statTotal = data.length;
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const statBulanIni = data.filter((r) => {
@@ -127,45 +139,45 @@ export default function RiwayatPage() {
       <Topbar
         title="Riwayat"
         breadcrumb={[{ label: 'KESIT Management' }, { label: 'Riwayat' }]}
-        searchPlaceholder="Cari siswa atau perubahan..."
-        searchValue={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          setHalamanSaatIni(1);
-        }}
       />
 
       {/* STATISTIK */}
       <section className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon blue">↻</div>
-          <div>
-            <strong id="statTotal">{statTotal}</strong>
-            <span>Total Riwayat</span>
-          </div>
-        </div>
+        {loading ? (
+          <SkeletonCard count={3} />
+        ) : (
+          <>
+            <div className="stat-card">
+              <div className="stat-icon blue">↻</div>
+              <div>
+                <strong id="statTotal">{statTotal}</strong>
+                <span>Total Riwayat</span>
+              </div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-icon green">↑</div>
-          <div>
-            <strong id="statBulanIni">{statBulanIni}</strong>
-            <span>Perubahan Bulan Ini</span>
-          </div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-icon green">↑</div>
+              <div>
+                <strong id="statBulanIni">{statBulanIni}</strong>
+                <span>Perubahan Bulan Ini</span>
+              </div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-icon orange">👥</div>
-          <div>
-            <strong id="statSiswa">{statSiswaCount}</strong>
-            <span>Siswa Tercatat</span>
-          </div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-icon orange">👥</div>
+              <div>
+                <strong id="statSiswa">{statSiswaCount}</strong>
+                <span>Siswa Tercatat</span>
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* FILTER */}
       <section className="filter-section">
         <div className="filter-grid">
-          <label>
+          <label className="filter-item-search">
             <span>Cari</span>
             <input
               type="text"
@@ -242,11 +254,14 @@ export default function RiwayatPage() {
 
           <div className="filter-buttons">
             <button type="button" id="btnReset" className="btn reset" onClick={handleResetFilter}>
-              Reset
+              Reset Filter
             </button>
-            <button type="button" id="btnCari" className="btn search">
-              Cari
-            </button>
+          </div>
+        </div>
+
+        <div className="filter-toolbar">
+          <div className="results-counter">
+            Menampilkan <strong>{dataFiltered.length}</strong> dari {data.length} riwayat
           </div>
         </div>
       </section>
@@ -281,11 +296,7 @@ export default function RiwayatPage() {
 
             <tbody id="tableBody">
               {loading ? (
-                <tr>
-                  <td colSpan={10} style={{ textAlign: 'center', padding: '36px' }}>
-                    Memuat data riwayat...
-                  </td>
-                </tr>
+                <SkeletonTable rows={6} cols={10} />
               ) : currentItems.length === 0 ? (
                 <tr>
                   <td colSpan={10}>
@@ -444,13 +455,13 @@ export default function RiwayatPage() {
                   <div>
                     <span>Dicatat Oleh</span>
                     <strong id="dDiubahOleh">
-                      {detailItem.diubah_oleh || (detailItem as any).detail?.dicatat_oleh || 'Admin KESIT'}
+                      {detailItem.diubah_oleh || 'Admin KESIT'}
                     </strong>
                   </div>
                   <div>
                     <span>Alasan / Catatan</span>
                     <strong id="dAlasan">
-                      {detailItem.alasan || (detailItem as any).detail?.alasan || '-'}
+                      {detailItem.alasan || '-'}
                     </strong>
                   </div>
                 </div>
@@ -463,25 +474,25 @@ export default function RiwayatPage() {
                   <div>
                     <span>Lokasi</span>
                     <strong id="dLokasiLama">
-                      {detailItem.lokasi_lama || (detailItem as any).detail?.lokasi_lama || '-'}
+                      {detailItem.lokasi_lama || '-'}
                     </strong>
                   </div>
                   <div>
                     <span>Kelas</span>
                     <strong id="dKelasLama">
-                      {detailItem.kelas_lama || (detailItem as any).detail?.kelas_lama || '-'}
+                      {detailItem.kelas_lama || '-'}
                     </strong>
                   </div>
                   <div>
                     <span>Paket</span>
                     <strong id="dPaketLama">
-                      {detailItem.paket_lama || (detailItem as any).detail?.nama_paket_lama || '-'}
+                      {detailItem.paket_lama || '-'}
                     </strong>
                   </div>
                   <div>
                     <span>Pelatih Pemilik</span>
                     <strong id="dPelatihLama">
-                      {detailItem.nama_pelatih_lama || (detailItem as any).detail?.pelatih_pemilik_lama_nama || '-'}
+                      {detailItem.nama_pelatih_lama || '-'}
                     </strong>
                   </div>
                 </div>
@@ -494,25 +505,25 @@ export default function RiwayatPage() {
                   <div>
                     <span>Lokasi</span>
                     <strong id="dLokasiBaru">
-                      {detailItem.lokasi_baru || (detailItem as any).detail?.lokasi_baru || '-'}
+                      {detailItem.lokasi_baru || '-'}
                     </strong>
                   </div>
                   <div>
                     <span>Kelas</span>
                     <strong id="dKelasBaru">
-                      {detailItem.kelas_baru || (detailItem as any).detail?.kelas_baru || '-'}
+                      {detailItem.kelas_baru || '-'}
                     </strong>
                   </div>
                   <div>
                     <span>Paket</span>
                     <strong id="dPaketBaru">
-                      {detailItem.paket_baru || (detailItem as any).detail?.nama_paket_baru || '-'}
+                      {detailItem.paket_baru || '-'}
                     </strong>
                   </div>
                   <div>
                     <span>Pelatih Pemilik</span>
                     <strong id="dPelatihBaru">
-                      {detailItem.nama_pelatih_baru || (detailItem as any).detail?.pelatih_pemilik_baru_nama || '-'}
+                      {detailItem.nama_pelatih_baru || '-'}
                     </strong>
                   </div>
                 </div>

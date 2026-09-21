@@ -7,6 +7,12 @@ export const KESIT_PAGE_ACCESS: Record<string, KesitRole[]> = {
   '/pelatih': ['Owner', 'Admin', 'Pelatih'],
   '/penilaian': ['Owner', 'Admin', 'Pelatih'],
   '/riwayat': ['Owner', 'Admin'],
+  '/jadwal': ['Owner', 'Admin', 'Pelatih'],
+  '/absensi': ['Owner', 'Admin', 'Pelatih'],
+  '/laporan-siswa': ['Owner', 'Admin', 'Pelatih'],
+  '/paket-pembayaran': ['Owner', 'Admin'],
+  '/keuangan': ['Owner', 'Admin'],
+  '/pengaturan': ['Owner', 'Admin'],
 };
 
 export function canAccessPage(pathname: string, role: KesitRole): boolean {

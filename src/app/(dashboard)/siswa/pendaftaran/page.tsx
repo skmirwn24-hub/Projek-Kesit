@@ -12,9 +12,11 @@ import {
 import { Topbar } from '@/components/layout/topbar';
 import { formatRupiah } from '@/lib/utils';
 import { generateKuitansiPDF, KuitansiData } from '@/lib/pdf';
+import { useToast } from '@/components/ui/toast';
 
 export default function PendaftaranSiswaPage() {
   const { profile } = useAuth();
+  const toast = useToast();
 
   // Master Pelatih state
   const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
@@ -167,7 +169,7 @@ export default function PendaftaranSiswaPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!namaLengkap || !lokasi || !kelas || !paket) {
-      alert('Mohon lengkapi data pendaftaran wajib.');
+      toast.warning('Mohon lengkapi data pendaftaran wajib.');
       return;
     }
 
@@ -206,7 +208,7 @@ export default function PendaftaranSiswaPage() {
       });
 
       if (!res.success || !res.idSiswa) {
-        alert(res.error || 'Gagal mendaftarkan siswa.');
+        toast.error(res.error || 'Gagal mendaftarkan siswa.');
         setSubmitting(false);
         return;
       }
@@ -242,10 +244,13 @@ export default function PendaftaranSiswaPage() {
         kuitansi,
       });
 
+      toast.success('Siswa berhasil didaftarkan dan kuitansi siap diunduh.');
+
       // Generate and download PDF
       generateKuitansiPDF(kuitansi);
-    } catch (err: any) {
-      alert(err.message || 'Terjadi kesalahan sistem.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

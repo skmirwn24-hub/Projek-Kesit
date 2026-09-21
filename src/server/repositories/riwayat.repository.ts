@@ -1,6 +1,34 @@
 import { createClient } from '@/server/supabase/server';
 import { RiwayatPerubahanSiswa } from '@/types/database';
 
+interface RiwayatJoinRow {
+  id: string;
+  siswa_id: string;
+  jenis_perubahan: string;
+  lokasi_lama: string | null;
+  kelas_lama: string | null;
+  paket_lama: string | null;
+  pelatih_pemilik_lama: string | null;
+  lokasi_baru: string | null;
+  kelas_baru: string | null;
+  paket_baru: string | null;
+  pelatih_pemilik_baru: string | null;
+  tanggal_perubahan: string | null;
+  alasan: string | null;
+  diubah_oleh: string | null;
+  created_at: string;
+  siswa: {
+    id_siswa: string;
+    nama_lengkap: string;
+  } | null;
+  pelatih_lama: {
+    nama: string;
+  } | null;
+  pelatih_baru: {
+    nama: string;
+  } | null;
+}
+
 export async function getRiwayatPerubahanSiswa(): Promise<RiwayatPerubahanSiswa[]> {
   const supabase = await createClient();
 
@@ -40,7 +68,9 @@ export async function getRiwayatPerubahanSiswa(): Promise<RiwayatPerubahanSiswa[
     throw new Error(error.message);
   }
 
-  return (data || []).map((row: any) => ({
+  const rows = (data || []) as unknown as RiwayatJoinRow[];
+
+  return rows.map((row) => ({
     id: row.id,
     siswa_id: row.siswa_id,
     jenis_perubahan: row.jenis_perubahan,

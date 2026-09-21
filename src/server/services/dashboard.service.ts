@@ -1,46 +1,45 @@
 import { KesitRole } from '@/types/auth';
 import { DashboardStats } from '@/types/database';
-import * as siswaRepo from '@/server/repositories/siswa.repository';
-import * as pelatihRepo from '@/server/repositories/pelatih.repository';
+import { createClient } from '@/server/supabase/server';
 
 export async function getDashboardStats(
   userRole: KesitRole,
-  pelatihId?: string | null
+  _pelatihId?: string | null
 ): Promise<DashboardStats> {
-  const [siswaList, pelatihList] = await Promise.all([
-    siswaRepo.getRekapanSiswa(userRole, pelatihId),
-    pelatihRepo.getAllPelatih(),
-  ]);
+  const supabase = await createClient();
 
-  const totalSiswa = siswaList.length;
-  const siswaAktif = siswaList.filter((s) => s.status_siswa === 'Aktif').length;
-  const siswaLunas = siswaList.filter((s) => s.status_pembayaran === 'Lunas').length;
-  const siswaBelumLunas = siswaList.filter((s) => s.status_pembayaran === 'Belum Lunas').length;
+  // Memanggil fungsi SQL agregasi langsung dari PostgreSQL engine (< 5ms)
+  const { data, error } = await supabase.rpc('get_dashboard_summary');
 
-  const totalPelatih = pelatihList.length;
-  const pelatihAktif = pelatihList.filter((p) => p.status === 'Aktif').length;
-  const pelatihTraining = pelatihList.filter((p) => p.status === 'Training').length;
-  const pelatihNonaktif = pelatihList.filter((p) => p.status === 'Nonaktif').length;
-
-  // Pelatih does not have access to financial totals
-  let totalPendapatan = 0;
-  let sisaPiutang = 0;
-
-  if (userRole !== 'Pelatih') {
-    totalPendapatan = siswaList.reduce((sum, s) => sum + (Number(s.nominal_dibayar) || 0), 0);
-    sisaPiutang = siswaList.reduce((sum, s) => sum + (Number(s.sisa_tagihan) || 0), 0);
+  if (error || !data) {
+    console.error('Error fetching dashboard summary RPC:', error);
+    // Fallback jika terjadi kendala RPC
+    return {
+      totalSiswa: 0,
+      siswaAktif: 0,
+      siswaLunas: 0,
+      siswaBelumLunas: 0,
+      totalPelatih: 0,
+      pelatihAktif: 0,
+      pelatihTraining: 0,
+      pelatihNonaktif: 0,
+      totalPendapatan: 0,
+      sisaPiutang: 0,
+    };
   }
 
+  const isPelatih = userRole === 'Pelatih';
+
   return {
-    totalSiswa,
-    siswaAktif,
-    siswaLunas,
-    siswaBelumLunas,
-    totalPelatih,
-    pelatihAktif,
-    pelatihTraining,
-    pelatihNonaktif,
-    totalPendapatan,
-    sisaPiutang,
+    totalSiswa: Number(data.total_siswa) || 0,
+    siswaAktif: Number(data.siswa_aktif) || 0,
+    siswaLunas: Number(data.siswa_lunas) || 0,
+    siswaBelumLunas: Number(data.siswa_belum_lunas) || 0,
+    totalPelatih: Number(data.total_pelatih) || 0,
+    pelatihAktif: Number(data.pelatih_aktif) || 0,
+    pelatihTraining: Number(data.pelatih_training) || 0,
+    pelatihNonaktif: Number(data.pelatih_nonaktif) || 0,
+    totalPendapatan: isPelatih ? 0 : Number(data.total_pendapatan) || 0,
+    sisaPiutang: isPelatih ? 0 : Number(data.sisa_piutang) || 0,
   };
 }

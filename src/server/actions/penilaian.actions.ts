@@ -13,8 +13,9 @@ export async function getPenilaianAction(): Promise<{
   try {
     const data = await penilaianService.fetchPenilaianList();
     return { success: true, data };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memuat penilaian pelatih.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memuat penilaian pelatih.';
+    return { success: false, error: message };
   }
 }
 

@@ -3,6 +3,7 @@
 import { loginSchema, LoginInput } from '@/server/validators/auth.schema';
 import * as authService from '@/server/services/auth.service';
 import { UserProfile } from '@/types/auth';
+import type { User } from '@supabase/supabase-js';
 
 export async function loginAction(
   input: LoginInput
@@ -23,7 +24,7 @@ export async function logoutAction(): Promise<void> {
 }
 
 export async function getCurrentUserAction(): Promise<{
-  user: any | null;
+  user: User | null;
   profile: UserProfile | null;
 }> {
   return authService.getCurrentUser();

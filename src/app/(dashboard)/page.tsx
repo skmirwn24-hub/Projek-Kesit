@@ -8,15 +8,18 @@ import { DashboardStats, RekapanSiswaView } from '@/types/database';
 import { Topbar } from '@/components/layout/topbar';
 import { formatRupiah } from '@/lib/utils';
 import { DATA_LOKASI } from '@/server/constants/master-data';
+import { Skeleton, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { role } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [operasionalSiswa, setOperasionalSiswa] = useState<RekapanSiswaView[]>([]);
+  const [loading, setLoading] = useState(true);
   const isPelatih = role === 'Pelatih';
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const [statsRes, siswaRes] = await Promise.all([
           getDashboardStatsAction(),
@@ -30,6 +33,8 @@ export default function DashboardPage() {
         }
       } catch (err) {
         console.error('Error loading dashboard data:', err);
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -46,33 +51,46 @@ export default function DashboardPage() {
 
       {/* STATISTIK CARDS */}
       <section className="cards">
-        <div className="card">
-          <div className="card-label">Total Siswa</div>
-          <div className="card-value" id="totalSiswa">
-            {stats?.totalSiswa ?? 0}
-          </div>
-        </div>
+        {loading ? (
+          <>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="card">
+                <Skeleton style={{ height: '14px', width: '40%', marginBottom: '8px' }} />
+                <Skeleton style={{ height: '28px', width: '60%' }} />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="card">
+              <div className="card-label">Total Siswa</div>
+              <div className="card-value" id="totalSiswa">
+                {stats?.totalSiswa ?? 0}
+              </div>
+            </div>
 
-        <div className="card">
-          <div className="card-label">Pelatih Aktif</div>
-          <div className="card-value" id="totalPelatih">
-            {stats?.pelatihAktif ?? 0}
-          </div>
-        </div>
+            <div className="card">
+              <div className="card-label">Siswa Aktif</div>
+              <div className="card-value" id="totalSiswaAktif">
+                {stats?.siswaAktif ?? 0}
+              </div>
+            </div>
 
-        <div className="card">
-          <div className="card-label">Kelas Hari Ini</div>
-          <div className="card-value" id="totalKelasHariIni">
-            {operasionalSiswa.length}
-          </div>
-        </div>
+            <div className="card">
+              <div className="card-label">Pelatih Aktif</div>
+              <div className="card-value" id="totalPelatih">
+                {stats?.pelatihAktif ?? 0}
+              </div>
+            </div>
 
-        <div className="card">
-          <div className="card-label">Lokasi</div>
-          <div className="card-value" id="totalLokasi">
-            {totalLokasiCount}
-          </div>
-        </div>
+            <div className="card">
+              <div className="card-label">Cabang Lokasi</div>
+              <div className="card-value" id="totalLokasi">
+                {totalLokasiCount}
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* OPERASIONAL HARI INI */}
@@ -97,9 +115,11 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody id="operasionalTableBody">
-              {operasionalSiswa.length === 0 ? (
+              {loading ? (
+                <SkeletonTable rows={4} cols={6} />
+              ) : operasionalSiswa.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '24px' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
                     Belum ada data operasional hari ini.
                   </td>
                 </tr>
@@ -129,35 +149,49 @@ export default function DashboardPage() {
         <>
           <section className="section-heading">
             <div>
-              <h2>Keuangan Klub</h2>
-              <p>Ringkasan keuangan bulan berjalan</p>
+              <h2>Keuangan & Tagihan SPP</h2>
+              <p>Ringkasan realisasi penerimaan dan piutang siswa</p>
             </div>
           </section>
 
           <section className="finance-grid">
-            <div className="finance-card">
-              <span>Pemasukan Bulan Ini</span>
-              <strong id="pemasukanBulanIni">
-                {formatRupiah(stats?.totalPendapatan ?? 0)}
-              </strong>
-            </div>
+            {loading ? (
+              <>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="finance-card">
+                    <Skeleton style={{ height: '14px', width: '50%', marginBottom: '8px' }} />
+                    <Skeleton style={{ height: '24px', width: '70%' }} />
+                  </div>
+                ))}
+              </>
+            ) : (
+              <>
+                <div className="finance-card">
+                  <span>Pemasukan Terbayar</span>
+                  <strong id="pemasukanBulanIni">
+                    {formatRupiah(stats?.totalPendapatan ?? 0)}
+                  </strong>
+                </div>
 
-            <div className="finance-card">
-              <span>Pengeluaran</span>
-              <strong id="pengeluaranBulanIni">
-                Rp0
-              </strong>
-            </div>
+                <div className="finance-card">
+                  <span>Sisa Tagihan SPP (Piutang)</span>
+                  <strong id="sisaPiutangSiswa" style={{ color: (stats?.sisaPiutang ?? 0) > 0 ? 'var(--color-warning)' : 'inherit' }}>
+                    {formatRupiah(stats?.sisaPiutang ?? 0)}
+                  </strong>
+                </div>
 
-            <div className="finance-card">
-              <span>Saldo</span>
-              <strong id="saldoBulanIni">
-                {formatRupiah(stats?.totalPendapatan ?? 0)}
-              </strong>
-            </div>
+                <div className="finance-card">
+                  <span>Status Pelunasan Siswa</span>
+                  <strong id="statusSiswaLunas" style={{ fontSize: '15px' }}>
+                    {stats?.siswaLunas ?? 0} Lunas • {stats?.siswaBelumLunas ?? 0} Belum Lunas
+                  </strong>
+                </div>
+              </>
+            )}
           </section>
         </>
       )}
     </>
   );
 }
+

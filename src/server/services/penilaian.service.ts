@@ -19,7 +19,8 @@ export async function submitPenilaian(
   try {
     await penilaianRepo.createPenilaian(input);
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal menyimpan penilaian pelatih.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal menyimpan penilaian pelatih.';
+    return { success: false, error: message };
   }
 }

@@ -1,12 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { UserProfile, KesitRole } from '@/types/auth';
 import { getCurrentUserAction, logoutAction } from '@/server/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   profile: UserProfile | null;
   role: KesitRole | null;
   isLoading: boolean;
@@ -30,9 +31,9 @@ export function AuthProvider({
 }: {
   children: React.ReactNode;
   initialProfile?: UserProfile | null;
-  initialUser?: any | null;
+  initialUser?: User | null;
 }) {
-  const [user, setUser] = useState<any | null>(initialUser || null);
+  const [user, setUser] = useState<User | null>(initialUser || null);
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile || null);
   const [isLoading, setIsLoading] = useState<boolean>(!initialProfile);
   const router = useRouter();

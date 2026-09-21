@@ -18,8 +18,9 @@ export async function getPelatihAction(): Promise<{
   try {
     const data = await pelatihService.fetchPelatihList();
     return { success: true, data };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memuat data pelatih.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memuat data pelatih.';
+    return { success: false, error: message };
   }
 }
 

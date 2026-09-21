@@ -65,6 +65,10 @@ export interface PembayaranSiswa {
   siswa_id: string;
   paket_siswa_id: string | null;
   nomor_kuitansi: string | null;
+  harga_paket?: number;
+  biaya_request_pelatih?: number;
+  diskon?: number;
+  total_tagihan?: number;
   nominal_dibayar: number;
   sisa_tagihan: number;
   status_pembayaran: StatusPembayaran | null;

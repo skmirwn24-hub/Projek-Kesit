@@ -19,8 +19,9 @@ export async function addPelatih(
   try {
     const result = await pelatihRepo.createPelatih(input);
     return { success: true, data: result };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal menambahkan data pelatih.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal menambahkan data pelatih.';
+    return { success: false, error: message };
   }
 }
 
@@ -36,7 +37,8 @@ export async function editPelatih(
   try {
     const result = await pelatihRepo.updatePelatih(id, input);
     return { success: true, data: result };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memperbarui data pelatih.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memperbarui data pelatih.';
+    return { success: false, error: message };
   }
 }

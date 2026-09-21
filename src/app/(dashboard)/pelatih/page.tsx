@@ -10,9 +10,12 @@ import {
 import { Pelatih, PelatihStatus } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
+import { useToast } from '@/components/ui/toast';
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function PelatihPage() {
   const { profile, role } = useAuth();
+  const toast = useToast();
   const [data, setData] = useState<Pelatih[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,6 +60,18 @@ export default function PelatihPage() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Keyboard shortcut: Escape to close modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFormModalOpen(false);
+        setDetailModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Filtered data
@@ -121,7 +136,7 @@ export default function PelatihPage() {
   const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nama.trim()) {
-      alert('Nama pelatih wajib diisi.');
+      toast.warning('Nama pelatih wajib diisi.');
       return;
     }
 
@@ -150,11 +165,11 @@ export default function PelatihPage() {
         });
 
         if (!res.success) {
-          alert(res.error || 'Gagal memperbarui data pelatih.');
+          toast.error(res.error || 'Gagal memperbarui data pelatih.');
           return;
         }
 
-        alert('Data pelatih berhasil diperbarui.');
+        toast.success('Data pelatih berhasil diperbarui.');
       } else {
         const res = await createPelatihAction({
           nama: nama.trim(),
@@ -170,17 +185,18 @@ export default function PelatihPage() {
         });
 
         if (!res.success) {
-          alert(res.error || 'Gagal menambahkan pelatih.');
+          toast.error(res.error || 'Gagal menambahkan pelatih.');
           return;
         }
 
-        alert('Pelatih baru berhasil ditambahkan.');
+        toast.success('Pelatih baru berhasil ditambahkan.');
       }
 
       setFormModalOpen(false);
       await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Terjadi kesalahan sistem.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -192,8 +208,55 @@ export default function PelatihPage() {
       <Topbar
         title="Pelatih"
         subtitle="Kelola data, status, dan masa training pelatih KESIT Management"
-        actions={
-          canManage && (
+      />
+
+      {/* STATS */}
+      <section className="stats-grid">
+        {loading ? (
+          <SkeletonCard count={4} />
+        ) : (
+          <>
+            <div className="stat-card">
+              <span>Total Pelatih</span>
+              <strong id="statTotalPelatih">{statTotal}</strong>
+            </div>
+
+            <div className="stat-card">
+              <span>Aktif</span>
+              <strong id="statPelatihAktif">{statAktif}</strong>
+            </div>
+
+            <div className="stat-card">
+              <span>Training</span>
+              <strong id="statPelatihTraining">{statTraining}</strong>
+            </div>
+
+            <div className="stat-card">
+              <span>Tidak Aktif</span>
+              <strong id="statPelatihNonAktif">{statNonAktif}</strong>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* PANEL */}
+      <section className="panel">
+        <div
+          className="panel-header"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div>
+            <h2>Daftar Pelatih</h2>
+            <p>Data pelatih lama dapat diperbarui tanpa mengubah ID pelatih.</p>
+          </div>
+
+          {canManage && (
             <button
               type="button"
               className="btn-primary"
@@ -202,40 +265,7 @@ export default function PelatihPage() {
             >
               + Tambah Pelatih
             </button>
-          )
-        }
-      />
-
-      {/* STATS */}
-      <section className="stats-grid">
-        <div className="stat-card">
-          <span>Total Pelatih</span>
-          <strong id="statTotalPelatih">{statTotal}</strong>
-        </div>
-
-        <div className="stat-card">
-          <span>Aktif</span>
-          <strong id="statPelatihAktif">{statAktif}</strong>
-        </div>
-
-        <div className="stat-card">
-          <span>Training</span>
-          <strong id="statPelatihTraining">{statTraining}</strong>
-        </div>
-
-        <div className="stat-card">
-          <span>Tidak Aktif</span>
-          <strong id="statPelatihNonAktif">{statNonAktif}</strong>
-        </div>
-      </section>
-
-      {/* PANEL */}
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <h2>Daftar Pelatih</h2>
-            <p>Data pelatih lama dapat diperbarui tanpa mengubah ID pelatih.</p>
-          </div>
+          )}
         </div>
 
         {/* FILTERS */}
@@ -267,6 +297,10 @@ export default function PelatihPage() {
           </div>
         </div>
 
+        <div className="results-counter" style={{ fontSize: '13px', color: '#64748b', marginTop: '12px', padding: '0 4px' }}>
+          Menampilkan <strong>{filteredData.length}</strong> dari {data.length} pelatih
+        </div>
+
         {/* TABLE */}
         <div className="table-wrapper">
           <table>
@@ -284,11 +318,7 @@ export default function PelatihPage() {
 
             <tbody id="pelatihTableBody">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="loading-cell">
-                    Memuat data pelatih...
-                  </td>
-                </tr>
+                <SkeletonTable rows={6} cols={7} />
               ) : filteredData.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="empty-cell">

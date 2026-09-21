@@ -9,40 +9,39 @@ import {
   pindahKelasAction,
 } from '@/server/actions/siswa.actions';
 import { getPelatihAction } from '@/server/actions/pelatih.actions';
-import { RekapanSiswaView, Pelatih } from '@/types/database';
+import { RekapanSiswaView, Pelatih, JenisKelamin, SiswaStatus } from '@/types/database';
 import { DATA_LOKASI, DATA_PAKET } from '@/server/constants/master-data';
 import { formatRupiah, formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
+import { useToast } from '@/components/ui/toast';
+import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function RekapanSiswaPage() {
   const { profile, role } = useAuth();
+  const toast = useToast();
   const [data, setData] = useState<RekapanSiswaView[]>([]);
   const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters
   const [search, setSearch] = useState('');
   const [filterLokasi, setFilterLokasi] = useState('');
   const [filterKelas, setFilterKelas] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPelatih, setFilterPelatih] = useState('');
 
-  // Pagination
   const [halamanSaatIni, setHalamanSaatIni] = useState(1);
   const [jumlahPerHalaman, setJumlahPerHalaman] = useState(10);
 
-  // Modals
   const [detailItem, setDetailItem] = useState<RekapanSiswaView | null>(null);
   const [editItem, setEditItem] = useState<RekapanSiswaView | null>(null);
   const [pindahItem, setPindahItem] = useState<RekapanSiswaView | null>(null);
 
-  // Edit form state
   const [editNamaLengkap, setEditNamaLengkap] = useState('');
   const [editNamaPanggilan, setEditNamaPanggilan] = useState('');
-  const [editJenisKelamin, setEditJenisKelamin] = useState('Laki-laki');
+  const [editJenisKelamin, setEditJenisKelamin] = useState<JenisKelamin>('Laki-laki');
   const [editTempatLahir, setEditTempatLahir] = useState('');
   const [editTanggalLahir, setEditTanggalLahir] = useState('');
-  const [editStatusSiswa, setEditStatusSiswa] = useState('Aktif');
+  const [editStatusSiswa, setEditStatusSiswa] = useState<SiswaStatus>('Aktif');
   const [editNamaWali, setEditNamaWali] = useState('');
   const [editNoHpWali, setEditNoHpWali] = useState('');
   const [editAlamat, setEditAlamat] = useState('');
@@ -89,6 +88,19 @@ export default function RekapanSiswaPage() {
     loadData();
   }, []);
 
+  // Keyboard shortcut: Escape to close any open modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDetailItem(null);
+        setEditItem(null);
+        setPindahItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Filter logic identical to legacy
   const dataTampil = useMemo(() => {
     return data.filter((item) => {
@@ -111,21 +123,32 @@ export default function RekapanSiswaPage() {
           return false;
       }
 
-      if (filterPelatih && item.pelatih_pemilik !== filterPelatih && item.pelatih_diminta !== filterPelatih) return false;
+      if (filterPelatih) {
+        const coach = pelatihList.find((p) => p.id === filterPelatih);
+        const coachName = coach ? coach.nama.toLowerCase() : '';
+        const matchId =
+          item.pelatih_pemilik_id === filterPelatih ||
+          item.pelatih_diminta_id === filterPelatih;
+        const matchName =
+          coachName &&
+          ((item.pelatih_pemilik || '').toLowerCase() === coachName ||
+            (item.pelatih_diminta || '').toLowerCase() === coachName);
+        if (!matchId && !matchName) return false;
+      }
 
       return true;
     });
-  }, [data, search, filterLokasi, filterKelas, filterStatus, filterPelatih]);
+  }, [data, search, filterLokasi, filterKelas, filterStatus, filterPelatih, pelatihList]);
 
-  // Stats
-  const statTotal = dataTampil.length;
-  const statAktif = dataTampil.filter((s) => s.status_siswa === 'Aktif').length;
-  const statMenunggu = dataTampil.filter(
+  // Stats: Agregat global sekolah (stabil, tidak fluktuatif saat filter/search dijalankan)
+  const statTotal = data.length;
+  const statAktif = data.filter((s) => s.status_siswa === 'Aktif').length;
+  const statMenunggu = data.filter(
     (s) => s.status_pembayaran === 'Belum Lunas'
   ).length;
-  const statNonAktif = dataTampil.filter((s) => s.status_siswa !== 'Aktif').length;
-  const statLokasi = new Set(dataTampil.map((s) => s.lokasi).filter(Boolean)).size;
-  const statKelas = new Set(dataTampil.map((s) => s.kelas).filter(Boolean)).size;
+  const statNonAktif = data.filter((s) => s.status_siswa !== 'Aktif').length;
+  const statLokasi = new Set(data.map((s) => s.lokasi).filter(Boolean)).size;
+  const statKelas = new Set(data.map((s) => s.kelas).filter(Boolean)).size;
 
   // Pagination calculations
   const totalHalaman = Math.max(1, Math.ceil(dataTampil.length / jumlahPerHalaman));
@@ -149,10 +172,10 @@ export default function RekapanSiswaPage() {
     setEditItem(item);
     setEditNamaLengkap(item.nama_lengkap || '');
     setEditNamaPanggilan(item.nama_panggilan || '');
-    setEditJenisKelamin(item.jenis_kelamin || 'Laki-laki');
+    setEditJenisKelamin((item.jenis_kelamin as JenisKelamin) || 'Laki-laki');
     setEditTempatLahir(item.tempat_lahir || '');
     setEditTanggalLahir(item.tanggal_lahir || '');
-    setEditStatusSiswa(item.status_siswa || 'Aktif');
+    setEditStatusSiswa((item.status_siswa as SiswaStatus) || 'Aktif');
     setEditNamaWali(item.nama_wali || '');
     setEditNoHpWali(item.no_hp_wali || '');
     setEditAlamat(item.alamat || '');
@@ -167,25 +190,26 @@ export default function RekapanSiswaPage() {
         siswa_id: editItem.id,
         nama_lengkap: editNamaLengkap,
         nama_panggilan: editNamaPanggilan || '',
-        jenis_kelamin: editJenisKelamin as any,
+        jenis_kelamin: editJenisKelamin,
         tempat_lahir: editTempatLahir || '',
         tanggal_lahir: editTanggalLahir || null,
         nama_wali: editNamaWali || '',
         no_hp_wali: editNoHpWali || '',
         alamat: editAlamat || '',
-        status_siswa: editStatusSiswa as any,
+        status_siswa: editStatusSiswa,
       });
 
       if (!res.success) {
-        alert(res.error || 'Gagal menyimpan perubahan.');
+        toast.error(res.error || 'Gagal menyimpan perubahan.');
         return;
       }
 
-      alert('Data siswa berhasil diperbarui.');
+      toast.success('Data siswa berhasil diperbarui.');
       setEditItem(null);
       await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Terjadi kesalahan sistem.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+      toast.error(message);
     } finally {
       setSubmittingEdit(false);
     }
@@ -262,7 +286,7 @@ export default function RekapanSiswaPage() {
     e.preventDefault();
     if (!pindahItem) return;
     if (!pindahLokasi || !pindahKelas || !pindahPaket || !pindahPelatihPemilik) {
-      alert('Semua field wajib diisi.');
+      toast.warning('Semua field wajib diisi.');
       return;
     }
 
@@ -286,15 +310,16 @@ export default function RekapanSiswaPage() {
       });
 
       if (!res.success) {
-        alert(res.error || 'Gagal memindahkan kelas siswa.');
+        toast.error(res.error || 'Gagal memindahkan kelas siswa.');
         return;
       }
 
-      alert('Kelas siswa berhasil dipindahkan.');
+      toast.success('Kelas siswa berhasil dipindahkan.');
       setPindahItem(null);
       await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Terjadi kesalahan sistem.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+      toast.error(message);
     } finally {
       setSubmittingPindah(false);
     }
@@ -308,71 +333,71 @@ export default function RekapanSiswaPage() {
       <Topbar
         title="Rekapan Siswa"
         breadcrumb={[{ label: 'Siswa' }, { label: 'Rekapan Siswa' }]}
-        searchPlaceholder="Cari siswa, ID, atau nama wali..."
-        searchValue={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          setHalamanSaatIni(1);
-        }}
       />
 
       {/* STATISTIK */}
       <section className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon blue">👥</div>
-          <div>
-            <strong id="statTotal">{statTotal}</strong>
-            <span>Total Siswa</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon green">✓</div>
-          <div>
-            <strong id="statAktif">{statAktif}</strong>
-            <span>Aktif</span>
-          </div>
-        </div>
-
-        {!isPelatih && (
-          <div className="stat-card" id="statMenungguCard">
-            <div className="stat-icon orange">Rp</div>
-            <div>
-              <strong id="statMenunggu">{statMenunggu}</strong>
-              <span>Menunggu Pembayaran</span>
+        {loading ? (
+          <SkeletonCard count={isPelatih ? 5 : 6} />
+        ) : (
+          <>
+            <div className="stat-card">
+              <div className="stat-icon blue">👥</div>
+              <div>
+                <strong id="statTotal">{statTotal}</strong>
+                <span>Total Siswa</span>
+              </div>
             </div>
-          </div>
+
+            <div className="stat-card">
+              <div className="stat-icon green">✓</div>
+              <div>
+                <strong id="statAktif">{statAktif}</strong>
+                <span>Aktif</span>
+              </div>
+            </div>
+
+            {!isPelatih && (
+              <div className="stat-card" id="statMenungguCard">
+                <div className="stat-icon orange">Rp</div>
+                <div>
+                  <strong id="statMenunggu">{statMenunggu}</strong>
+                  <span>Menunggu Pembayaran</span>
+                </div>
+              </div>
+            )}
+
+            <div className="stat-card">
+              <div className="stat-icon red">×</div>
+              <div>
+                <strong id="statNonAktif">{statNonAktif}</strong>
+                <span>Non Aktif</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon dark">◎</div>
+              <div>
+                <strong id="statLokasi">{statLokasi}</strong>
+                <span>Lokasi</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon dark">◇</div>
+              <div>
+                <strong id="statKelas">{statKelas}</strong>
+                <span>Jenis Kelas</span>
+              </div>
+            </div>
+          </>
         )}
-
-        <div className="stat-card">
-          <div className="stat-icon red">×</div>
-          <div>
-            <strong id="statNonAktif">{statNonAktif}</strong>
-            <span>Non Aktif</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon dark">◎</div>
-          <div>
-            <strong id="statLokasi">{statLokasi}</strong>
-            <span>Lokasi</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon dark">◇</div>
-          <div>
-            <strong id="statKelas">{statKelas}</strong>
-            <span>Jenis Kelas</span>
-          </div>
-        </div>
       </section>
 
       {/* FILTER */}
       <section className="filter-section">
         <div className="filter-grid">
-          <label>
+          <label className="filter-item-search">
             <span>Cari Siswa</span>
             <input
               type="text"
@@ -467,19 +492,22 @@ export default function RekapanSiswaPage() {
 
           <div className="filter-buttons">
             <button type="button" id="btnReset" className="btn reset" onClick={handleResetFilter}>
-              Reset
-            </button>
-            <button type="button" id="btnCari" className="btn search">
-              Cari
+              Reset Filter
             </button>
           </div>
         </div>
 
-        {canManage && (
-          <Link href="/siswa/pendaftaran" className="btn tambah">
-            + Tambah Siswa
-          </Link>
-        )}
+        <div className="filter-toolbar">
+          <div className="results-counter">
+            Menampilkan <strong>{dataTampil.length}</strong> dari {data.length} siswa
+          </div>
+
+          {canManage && (
+            <Link href="/siswa/pendaftaran" className="btn tambah">
+              + Tambah Siswa
+            </Link>
+          )}
+        </div>
       </section>
 
       {/* TABEL SISWA */}
@@ -498,11 +526,7 @@ export default function RekapanSiswaPage() {
 
             <tbody id="tableBody">
               {loading ? (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '36px' }}>
-                    Memuat data siswa...
-                  </td>
-                </tr>
+                <SkeletonTable rows={6} cols={5} />
               ) : currentItems.length === 0 ? (
                 <tr>
                   <td colSpan={5}>
@@ -922,7 +946,7 @@ export default function RekapanSiswaPage() {
                       id="editJenisKelamin"
                       required
                       value={editJenisKelamin}
-                      onChange={(e) => setEditJenisKelamin(e.target.value)}
+                      onChange={(e) => setEditJenisKelamin(e.target.value as JenisKelamin)}
                     >
                       <option value="Laki-laki">Laki-laki</option>
                       <option value="Perempuan">Perempuan</option>
@@ -955,10 +979,11 @@ export default function RekapanSiswaPage() {
                       id="editStatusSiswa"
                       required
                       value={editStatusSiswa}
-                      onChange={(e) => setEditStatusSiswa(e.target.value)}
+                      onChange={(e) => setEditStatusSiswa(e.target.value as SiswaStatus)}
                     >
                       <option value="Aktif">Aktif</option>
-                      <option value="Tidak Aktif">Tidak Aktif</option>
+                      <option value="Nonaktif">Tidak Aktif</option>
+                      <option value="Cuti">Cuti</option>
                     </select>
                   </label>
                 </div>

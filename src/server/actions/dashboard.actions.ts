@@ -17,7 +17,8 @@ export async function getDashboardStatsAction(): Promise<{
   try {
     const data = await dashboardService.getDashboardStats(profile.role, profile.pelatih_id);
     return { success: true, data };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memuat data statistik dashboard.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memuat data statistik dashboard.';
+    return { success: false, error: message };
   }
 }

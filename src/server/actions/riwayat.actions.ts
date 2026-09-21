@@ -22,7 +22,8 @@ export async function getRiwayatAction(): Promise<{
   try {
     const data = await riwayatRepo.getRiwayatPerubahanSiswa();
     return { success: true, data };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memuat log riwayat.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memuat log riwayat.';
+    return { success: false, error: message };
   }
 }

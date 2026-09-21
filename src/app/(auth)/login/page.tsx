@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 import { loginAction } from '@/server/actions/auth.actions';
 
 export default function LoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [pesan, setPesan] = useState<{ text: string; type: 'error' | 'success' | '' }>({
     text: '',
     type: '',
@@ -42,9 +44,10 @@ export default function LoginPage() {
         router.push('/');
         router.refresh();
       }, 350);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat login.';
       setPesan({
-        text: err.message || 'Terjadi kesalahan saat login.',
+        text: message,
         type: 'error',
       });
       setLoading(false);
@@ -73,15 +76,25 @@ export default function LoginPage() {
           />
 
           <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="Masukkan password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="password-input-wrapper">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              placeholder="Masukkan password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
 
           <button type="submit" disabled={loading}>
             {loading ? 'Memproses...' : 'Masuk'}

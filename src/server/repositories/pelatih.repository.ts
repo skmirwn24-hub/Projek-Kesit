@@ -4,17 +4,29 @@ import { PelatihInput } from '@/server/validators/pelatih.schema';
 
 export async function getAllPelatih(): Promise<Pelatih[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('pelatih')
-    .select('*')
-    .order('nama', { ascending: true });
+  const [pelatihRes, siswaRes] = await Promise.all([
+    supabase.from('pelatih').select('*').order('nama', { ascending: true }),
+    supabase.from('siswa').select('pelatih_pemilik_id').eq('status_siswa', 'Aktif'),
+  ]);
 
-  if (error) {
-    console.error('Error fetching pelatih:', error);
-    throw new Error(error.message);
+  if (pelatihRes.error) {
+    console.error('Error fetching pelatih:', pelatihRes.error);
+    throw new Error(pelatihRes.error.message);
   }
 
-  return (data || []) as Pelatih[];
+  const counts: Record<string, number> = {};
+  if (siswaRes.data) {
+    siswaRes.data.forEach((s: { pelatih_pemilik_id?: string | null }) => {
+      if (s.pelatih_pemilik_id) {
+        counts[s.pelatih_pemilik_id] = (counts[s.pelatih_pemilik_id] || 0) + 1;
+      }
+    });
+  }
+
+  return (pelatihRes.data || []).map((p: Pelatih) => ({
+    ...p,
+    total_siswa_milik: counts[p.id] || 0,
+  }));
 }
 
 export async function getPelatihById(id: string): Promise<Pelatih | null> {

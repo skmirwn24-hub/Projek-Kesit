@@ -69,6 +69,46 @@ export async function pindahKelasAction(
   return siswaService.moveSiswaClass(parsed.data, profile.role);
 }
 
+export async function getPaginatedRekapanSiswaAction(
+  options: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    filterStatus?: string;
+    filterLokasi?: string;
+    filterKelas?: string;
+    filterPelatih?: string;
+  } = {}
+): Promise<{
+  success: boolean;
+  data?: RekapanSiswaView[];
+  totalCount?: number;
+  totalPages?: number;
+  page?: number;
+  pageSize?: number;
+  error?: string;
+}> {
+  const { profile } = await getCurrentUser();
+  if (!profile) {
+    return { success: false, error: 'Sesi tidak valid, silakan login kembali.' };
+  }
+
+  try {
+    const result = await siswaService.fetchPaginatedRekapanSiswa(profile.role, options);
+    return {
+      success: true,
+      data: result.data,
+      totalCount: result.totalCount,
+      totalPages: result.totalPages,
+      page: result.page,
+      pageSize: result.pageSize,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memuat rekapan siswa.';
+    return { success: false, error: message };
+  }
+}
+
 export async function getRekapanSiswaAction(): Promise<{
   success: boolean;
   data?: RekapanSiswaView[];
@@ -82,7 +122,8 @@ export async function getRekapanSiswaAction(): Promise<{
   try {
     const data = await siswaService.fetchRekapanSiswa(profile.role, profile.pelatih_id);
     return { success: true, data };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Gagal memuat rekapan siswa.' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Gagal memuat rekapan siswa.';
+    return { success: false, error: message };
   }
 }

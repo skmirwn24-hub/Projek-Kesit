@@ -1,7 +1,8 @@
 import React from 'react';
 import { getCurrentUser } from '@/server/services/auth.service';
 import { AuthProvider } from '@/hooks/use-auth';
-import { Sidebar } from '@/components/layout/sidebar';
+import { ToastProvider } from '@/components/ui/toast';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 
 export default async function DashboardLayout({
   children,
@@ -12,12 +13,10 @@ export default async function DashboardLayout({
 
   return (
     <AuthProvider initialProfile={profile} initialUser={user}>
-      <div className="app">
-        <Sidebar />
-        <main className="main">
-          {children}
-        </main>
-      </div>
+      <ToastProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </ToastProvider>
     </AuthProvider>
   );
 }
+

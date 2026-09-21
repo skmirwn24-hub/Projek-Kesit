@@ -1,6 +1,7 @@
 import { createClient } from '@/server/supabase/server';
 import * as userRepo from '@/server/repositories/user.repository';
 import { UserProfile } from '@/types/auth';
+import type { User } from '@supabase/supabase-js';
 
 export async function loginWithIdentifier(
   identifier: string,
@@ -51,7 +52,7 @@ export async function loginWithIdentifier(
 }
 
 export async function getCurrentUser(): Promise<{
-  user: any | null;
+  user: User | null;
   profile: UserProfile | null;
 }> {
   const supabase = await createClient();
