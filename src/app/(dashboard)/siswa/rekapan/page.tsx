@@ -12,7 +12,7 @@ import { getPelatihAction } from '@/server/actions/pelatih.actions';
 import { RekapanSiswaView, Pelatih } from '@/types/database';
 import { DATA_LOKASI, DATA_PAKET } from '@/server/constants/master-data';
 import { formatRupiah, formatTanggal } from '@/lib/utils';
-import '@/styles/rekapan-siswa.css';
+import { Topbar } from '@/components/layout/topbar';
 
 export default function RekapanSiswaPage() {
   const { profile, role } = useAuth();
@@ -305,39 +305,16 @@ export default function RekapanSiswaPage() {
   return (
     <>
       {/* TOPBAR */}
-      <header className="topbar">
-        <div>
-          <h1>Rekapan Siswa</h1>
-          <div className="breadcrumb">
-            <span>Siswa</span>
-            <span>›</span>
-            <span>Rekapan Siswa</span>
-          </div>
-        </div>
-
-        <div className="topbar-right">
-          <div className="top-search">
-            <span>⌕</span>
-            <input
-              type="text"
-              id="searchTop"
-              placeholder="Cari siswa, ID, atau nama wali..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setHalamanSaatIni(1);
-              }}
-            />
-          </div>
-
-          <div className="admin-box">
-            <div className="admin-avatar">●</div>
-            <div>
-              <strong>{displayName}</strong>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Topbar
+        title="Rekapan Siswa"
+        breadcrumb={[{ label: 'Siswa' }, { label: 'Rekapan Siswa' }]}
+        searchPlaceholder="Cari siswa, ID, atau nama wali..."
+        searchValue={search}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setHalamanSaatIni(1);
+        }}
+      />
 
       {/* STATISTIK */}
       <section className="stats-grid">

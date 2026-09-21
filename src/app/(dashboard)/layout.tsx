@@ -2,7 +2,6 @@ import React from 'react';
 import { getCurrentUser } from '@/server/services/auth.service';
 import { AuthProvider } from '@/hooks/use-auth';
 import { Sidebar } from '@/components/layout/sidebar';
-import '@/styles/dashboard.css';
 
 export default async function DashboardLayout({
   children,

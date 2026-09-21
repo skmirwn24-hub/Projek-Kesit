@@ -12,7 +12,6 @@ import {
 import { Topbar } from '@/components/layout/topbar';
 import { formatRupiah } from '@/lib/utils';
 import { generateKuitansiPDF, KuitansiData } from '@/lib/pdf';
-import '@/styles/pendaftaran-siswa.css';
 
 export default function PendaftaranSiswaPage() {
   const { profile } = useAuth();

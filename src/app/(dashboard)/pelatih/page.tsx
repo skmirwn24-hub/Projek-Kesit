@@ -9,7 +9,7 @@ import {
 } from '@/server/actions/pelatih.actions';
 import { Pelatih, PelatihStatus } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
-import '@/styles/pelatih.css';
+import { Topbar } from '@/components/layout/topbar';
 
 export default function PelatihPage() {
   const { profile, role } = useAuth();
@@ -189,27 +189,22 @@ export default function PelatihPage() {
   return (
     <>
       {/* TOPBAR */}
-      <header className="topbar">
-        <div>
-          <h1>Pelatih</h1>
-          <p>Kelola data, status, dan masa training pelatih KESIT Management.</p>
-        </div>
-
-        <div className="topbar-actions">
-          <div className="topbar-badge">{displayName}</div>
-
-          {canManage && (
+      <Topbar
+        title="Pelatih"
+        subtitle="Kelola data, status, dan masa training pelatih KESIT Management"
+        actions={
+          canManage && (
             <button
               type="button"
-              className="primary-btn"
+              className="btn-primary"
               id="btnTambahPelatih"
               onClick={handleOpenTambah}
             >
               + Tambah Pelatih
             </button>
-          )}
-        </div>
-      </header>
+          )
+        }
+      />
 
       {/* STATS */}
       <section className="stats-grid">

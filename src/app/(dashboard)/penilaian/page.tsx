@@ -9,7 +9,7 @@ import {
 import { getPelatihAction } from '@/server/actions/pelatih.actions';
 import { PenilaianPelatihView, Pelatih } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
-import '@/styles/penilaian-pelatih.css';
+import { Topbar } from '@/components/layout/topbar';
 
 export default function PenilaianPelatihPage() {
   const { profile, role } = useAuth();
@@ -224,14 +224,10 @@ export default function PenilaianPelatihPage() {
   return (
     <>
       {/* TOPBAR */}
-      <header className="topbar">
-        <div>
-          <h1>Penilaian Pelatih</h1>
-          <p>Penilaian, KKM, pelanggaran dan sanksi pelatih KESIT Management.</p>
-        </div>
-
-        <div className="topbar-badge">{displayName}</div>
-      </header>
+      <Topbar
+        title="Penilaian Pelatih"
+        subtitle="Penilaian, KKM, pelanggaran dan sanksi pelatih KESIT Management"
+      />
 
       {/* STATISTIK */}
       <section className="stats-grid">

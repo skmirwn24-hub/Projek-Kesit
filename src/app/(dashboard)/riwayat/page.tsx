@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getRiwayatAction } from '@/server/actions/riwayat.actions';
 import { RiwayatPerubahanSiswa } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
-import '@/styles/riwayat.css';
+import { Topbar } from '@/components/layout/topbar';
 
 export default function RiwayatPage() {
   const { profile, role } = useAuth();
@@ -124,39 +124,16 @@ export default function RiwayatPage() {
   return (
     <>
       {/* TOPBAR */}
-      <header className="topbar">
-        <div>
-          <h1>Riwayat</h1>
-          <div className="breadcrumb">
-            <span>KESIT Management</span>
-            <span>›</span>
-            <span>Riwayat</span>
-          </div>
-        </div>
-
-        <div className="topbar-right">
-          <div className="top-search">
-            <span>⌕</span>
-            <input
-              type="text"
-              id="searchTop"
-              placeholder="Cari siswa atau perubahan..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setHalamanSaatIni(1);
-              }}
-            />
-          </div>
-
-          <div className="admin-box">
-            <div className="admin-avatar">●</div>
-            <div>
-              <strong>{displayName}</strong>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Topbar
+        title="Riwayat"
+        breadcrumb={[{ label: 'KESIT Management' }, { label: 'Riwayat' }]}
+        searchPlaceholder="Cari siswa atau perubahan..."
+        searchValue={search}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setHalamanSaatIni(1);
+        }}
+      />
 
       {/* STATISTIK */}
       <section className="stats-grid">
