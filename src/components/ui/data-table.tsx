@@ -2,8 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
-import { Input } from './input';
-import { Select } from './select';
 
 export interface Column<T> {
   header: string;
@@ -22,7 +20,7 @@ export interface DataTableProps<T> {
   isLoading?: boolean;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   columns,
   data,
   searchPlaceholder = 'Cari data...',

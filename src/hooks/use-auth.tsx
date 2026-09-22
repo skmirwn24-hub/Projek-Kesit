@@ -51,9 +51,26 @@ export function AuthProvider({
   };
 
   useEffect(() => {
+    let isMounted = true;
     if (!initialProfile) {
-      fetchAuth();
+      getCurrentUserAction()
+        .then((res) => {
+          if (isMounted) {
+            setUser(res.user);
+            setProfile(res.profile);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Error fetching auth:', err);
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        });
     }
+    return () => {
+      isMounted = false;
+    };
   }, [initialProfile]);
 
   const handleLogout = async () => {

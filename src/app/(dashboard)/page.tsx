@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { getDashboardStatsAction } from '@/server/actions/dashboard.actions';
-import { getRekapanSiswaAction } from '@/server/actions/siswa.actions';
-import { DashboardStats, RekapanSiswaView } from '@/types/database';
+import { useDashboardData } from '@/hooks/use-dashboard-data';
 import { Topbar } from '@/components/layout/topbar';
 import { formatRupiah } from '@/lib/utils';
 import { DATA_LOKASI } from '@/server/constants/master-data';
@@ -12,33 +10,8 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { role } = useAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [operasionalSiswa, setOperasionalSiswa] = useState<RekapanSiswaView[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { stats, operasionalSiswa, isLoading: loading } = useDashboardData();
   const isPelatih = role === 'Pelatih';
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [statsRes, siswaRes] = await Promise.all([
-          getDashboardStatsAction(),
-          getRekapanSiswaAction(),
-        ]);
-        if (statsRes.success && statsRes.data) {
-          setStats(statsRes.data);
-        }
-        if (siswaRes.success && siswaRes.data) {
-          setOperasionalSiswa(siswaRes.data.slice(0, 5));
-        }
-      } catch (err) {
-        console.error('Error loading dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
 
   const totalLokasiCount = Object.keys(DATA_LOKASI).length;
 

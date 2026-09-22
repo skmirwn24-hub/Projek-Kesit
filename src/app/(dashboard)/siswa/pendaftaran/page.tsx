@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { getPelatihAction } from '@/server/actions/pelatih.actions';
+import { usePelatih } from '@/hooks/use-pelatih';
+import { useSWRConfig } from 'swr';
+import { SWR_KEYS } from '@/lib/swr-keys';
 import { daftarSiswaAction } from '@/server/actions/siswa.actions';
-import { Pelatih } from '@/types/database';
 import {
   DATA_LOKASI,
   DATA_PAKET,
@@ -17,9 +18,12 @@ import { useToast } from '@/components/ui/toast';
 export default function PendaftaranSiswaPage() {
   const { profile } = useAuth();
   const toast = useToast();
-
-  // Master Pelatih state
-  const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
+  const { mutate } = useSWRConfig();
+  const { pelatih: allPelatih } = usePelatih();
+  const pelatihList = useMemo(
+    () => allPelatih.filter((p) => p.status !== 'Nonaktif'),
+    [allPelatih]
+  );
 
   // Form inputs
   const [namaLengkap, setNamaLengkap] = useState('');
@@ -37,7 +41,8 @@ export default function PendaftaranSiswaPage() {
 
   const [lokasi, setLokasi] = useState('');
   const [kelas, setKelas] = useState('');
-  const [pelatihPemilik, setPelatihPemilik] = useState('');
+  const [pelatihPemilikState, setPelatihPemilik] = useState('');
+  const pelatihPemilik = pelatihPemilikState || (pelatihList[0]?.id ?? '');
   const [pelatihDiminta, setPelatihDiminta] = useState('');
 
   const [paket, setPaket] = useState('');
@@ -49,7 +54,9 @@ export default function PendaftaranSiswaPage() {
 
   const [nominalDibayar, setNominalDibayar] = useState<number | ''>('');
   const [metodePembayaran, setMetodePembayaran] = useState('Tunai');
-  const [adminPenerima, setAdminPenerima] = useState('');
+  const defaultAdmin = profile?.nama_tampilan || profile?.username || 'Admin KESIT';
+  const [adminPenerimaCustom, setAdminPenerima] = useState<string | null>(null);
+  const adminPenerima = adminPenerimaCustom ?? defaultAdmin;
 
   // Results & status
   const [submitting, setSubmitting] = useState(false);
@@ -64,29 +71,7 @@ export default function PendaftaranSiswaPage() {
     kuitansi: KuitansiData;
   } | null>(null);
 
-  useEffect(() => {
-    async function loadCoaches() {
-      try {
-        const res = await getPelatihAction();
-        if (res.success && res.data) {
-          const available = res.data.filter((p) => p.status !== 'Nonaktif');
-          setPelatihList(available);
-          if (available.length > 0) {
-            setPelatihPemilik(available[0].id);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading coaches:', err);
-      }
-    }
-    loadCoaches();
-  }, []);
 
-  useEffect(() => {
-    if (profile?.nama_tampilan || profile?.username) {
-      setAdminPenerima(profile.nama_tampilan || profile.username);
-    }
-  }, [profile]);
 
   // Handle Location change
   const handleLokasiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -175,7 +160,6 @@ export default function PendaftaranSiswaPage() {
 
     setSubmitting(true);
     const coachOwner = pelatihList.find((p) => p.id === pelatihPemilik);
-    const coachDiminta = pelatihList.find((p) => p.id === pelatihDiminta);
     const noKuitansi = `KST-${Date.now().toString().slice(-6)}`;
 
     try {
@@ -245,6 +229,8 @@ export default function PendaftaranSiswaPage() {
       });
 
       toast.success('Siswa berhasil didaftarkan dan kuitansi siap diunduh.');
+      mutate(SWR_KEYS.SISWA_REKAPAN);
+      mutate(SWR_KEYS.DASHBOARD);
 
       // Generate and download PDF
       generateKuitansiPDF(kuitansi);

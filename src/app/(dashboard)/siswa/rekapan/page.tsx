@@ -4,12 +4,14 @@ import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import {
-  getRekapanSiswaAction,
   editSiswaAction,
   pindahKelasAction,
 } from '@/server/actions/siswa.actions';
-import { getPelatihAction } from '@/server/actions/pelatih.actions';
-import { RekapanSiswaView, Pelatih, JenisKelamin, SiswaStatus } from '@/types/database';
+import { useSiswaRekapan } from '@/hooks/use-siswa-rekapan';
+import { usePelatih } from '@/hooks/use-pelatih';
+import { useSWRConfig } from 'swr';
+import { SWR_KEYS } from '@/lib/swr-keys';
+import { RekapanSiswaView, JenisKelamin, SiswaStatus } from '@/types/database';
 import { DATA_LOKASI, DATA_PAKET } from '@/server/constants/master-data';
 import { formatRupiah, formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
@@ -19,9 +21,10 @@ import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 export default function RekapanSiswaPage() {
   const { profile, role } = useAuth();
   const toast = useToast();
-  const [data, setData] = useState<RekapanSiswaView[]>([]);
-  const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { mutate } = useSWRConfig();
+  const { siswa: data, isLoading: loadingSiswa, mutateSiswa } = useSiswaRekapan();
+  const { pelatih: pelatihList, isLoading: loadingPelatih } = usePelatih();
+  const loading = loadingSiswa || loadingPelatih;
 
   const [search, setSearch] = useState('');
   const [filterLokasi, setFilterLokasi] = useState('');
@@ -63,30 +66,7 @@ export default function RekapanSiswaPage() {
   const isPelatih = role === 'Pelatih';
   const canManage = role === 'Owner' || role === 'Admin';
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [siswaRes, pelatihRes] = await Promise.all([
-        getRekapanSiswaAction(),
-        getPelatihAction(),
-      ]);
 
-      if (siswaRes.success && siswaRes.data) {
-        setData(siswaRes.data);
-      }
-      if (pelatihRes.success && pelatihRes.data) {
-        setPelatihList(pelatihRes.data);
-      }
-    } catch (err) {
-      console.error('Failed to load rekapan siswa:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Keyboard shortcut: Escape to close any open modal
   useEffect(() => {
@@ -206,7 +186,8 @@ export default function RekapanSiswaPage() {
 
       toast.success('Data siswa berhasil diperbarui.');
       setEditItem(null);
-      await loadData();
+      await mutateSiswa();
+      mutate(SWR_KEYS.DASHBOARD);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       toast.error(message);
@@ -316,7 +297,8 @@ export default function RekapanSiswaPage() {
 
       toast.success('Kelas siswa berhasil dipindahkan.');
       setPindahItem(null);
-      await loadData();
+      await mutateSiswa();
+      mutate(SWR_KEYS.DASHBOARD);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       toast.error(message);
