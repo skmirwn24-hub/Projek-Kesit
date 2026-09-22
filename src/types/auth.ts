@@ -36,4 +36,6 @@ export type Permission =
   | 'penilaian:read'
   | 'penilaian:write'
   | 'riwayat:read'
-  | 'akun:manage';
+  | 'akun:manage'
+  | 'absensi:read'
+  | 'absensi:write';

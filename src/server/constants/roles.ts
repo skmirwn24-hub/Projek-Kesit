@@ -20,6 +20,8 @@ export const KESIT_PERMISSIONS: Record<KesitRole, Permission[]> = {
     'penilaian:write',
     'riwayat:read',
     'akun:manage',
+    'absensi:read',
+    'absensi:write',
   ],
   Admin: [
     'siswa:create',
@@ -32,11 +34,15 @@ export const KESIT_PERMISSIONS: Record<KesitRole, Permission[]> = {
     'penilaian:read',
     'penilaian:write',
     'riwayat:read',
+    'absensi:read',
+    'absensi:write',
   ],
   Pelatih: [
     'siswa:read',
     'pelatih:read',
     'penilaian:read',
+    'absensi:read',
+    'absensi:write', // Dibatasi RLS ke siswa miliknya saja
   ],
 };
 

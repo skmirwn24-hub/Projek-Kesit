@@ -9,6 +9,8 @@ export type PelatihStatus = 'Aktif' | 'Training' | 'Nonaktif';
 export type SiswaStatus = 'Aktif' | 'Nonaktif' | 'Cuti';
 export type JenisKelamin = 'Laki-laki' | 'Perempuan';
 export type StatusPembayaran = 'Lunas' | 'Belum Lunas';
+export type KategoriKelas = 'Reguler' | 'Private' | 'Prestasi';
+export type StatusHadir = 'Hadir' | 'Tidak Hadir';
 
 export interface Pelatih {
   id: string;
@@ -195,6 +197,60 @@ export interface RiwayatPerubahanSiswa {
   id_siswa?: string;
   nama_pelatih_lama?: string;
   nama_pelatih_baru?: string;
+}
+
+export interface AbsensiSiswa {
+  id: string;
+  siswa_id: string;
+  paket_siswa_id: string | null;
+  pelatih_id: string | null;
+  tanggal: string;
+  nomor_sesi: number | null;
+  kategori: KategoriKelas;
+  status_hadir: StatusHadir;
+  catatan: string | null;
+  dicatat_oleh: string | null;
+  created_at: string;
+}
+
+export interface AbsensiSiswaView {
+  id: string;
+  siswa_id: string;
+  id_siswa: string;
+  nama_lengkap: string;
+  nama_panggilan: string | null;
+  pelatih_pemilik_id: string | null;
+  pelatih_pemilik: string | null;
+  pelatih_id: string | null;
+  nama_pelatih_mengajar: string | null;
+  tanggal: string;
+  nomor_sesi: number | null;
+  kategori: KategoriKelas;
+  status_hadir: StatusHadir;
+  catatan: string | null;
+  paket_siswa_id: string | null;
+  kuota_total: number;
+  kuota_terpakai: number;
+  dicatat_oleh: string | null;
+  created_at: string;
+}
+
+export interface SiswaUntukAbsensiView {
+  siswa_id: string;
+  id_siswa: string;
+  nama_lengkap: string;
+  nama_panggilan: string | null;
+  pelatih_pemilik_id: string | null;
+  pelatih_pemilik: string | null;
+  paket_siswa_id: string | null;
+  kategori: KategoriKelas | null;
+  kuota_total: number;
+  kuota_terpakai: number;
+  nama_paket: string | null;
+  // Populated client-side: absensi status untuk sesi/hari aktif
+  absensi_id?: string | null;
+  status_hadir?: StatusHadir | null;
+  pelatih_mengajar_id?: string | null;
 }
 
 export interface DashboardStats {
