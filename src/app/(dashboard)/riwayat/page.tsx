@@ -2,16 +2,15 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { getRiwayatAction } from '@/server/actions/riwayat.actions';
+import { useRiwayat } from '@/hooks/use-riwayat';
 import { RiwayatPerubahanSiswa } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
 import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function RiwayatPage() {
-  const { profile, role } = useAuth();
-  const [data, setData] = useState<RiwayatPerubahanSiswa[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { role } = useAuth();
+  const { riwayat: data, isLoading: loading } = useRiwayat();
 
   // Filters
   const [search, setSearch] = useState('');
@@ -25,26 +24,6 @@ export default function RiwayatPage() {
 
   // Detail Modal
   const [detailItem, setDetailItem] = useState<RiwayatPerubahanSiswa | null>(null);
-
-  const displayName = profile?.nama_tampilan || profile?.username || 'Admin KESIT';
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const res = await getRiwayatAction();
-      if (res.success && res.data) {
-        setData(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load riwayat:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Keyboard shortcut: Escape to close modal
   useEffect(() => {

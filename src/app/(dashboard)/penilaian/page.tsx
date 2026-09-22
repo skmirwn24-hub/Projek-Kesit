@@ -2,12 +2,10 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import {
-  getPenilaianAction,
-  submitPenilaianAction,
-} from '@/server/actions/penilaian.actions';
-import { getPelatihAction } from '@/server/actions/pelatih.actions';
-import { PenilaianPelatihView, Pelatih } from '@/types/database';
+import { submitPenilaianAction } from '@/server/actions/penilaian.actions';
+import { usePenilaian } from '@/hooks/use-penilaian';
+import { usePelatih } from '@/hooks/use-pelatih';
+import { PenilaianPelatihView } from '@/types/database';
 import { formatTanggal } from '@/lib/utils';
 import { Topbar } from '@/components/layout/topbar';
 import { useToast } from '@/components/ui/toast';
@@ -16,9 +14,13 @@ import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 export default function PenilaianPelatihPage() {
   const { profile, role } = useAuth();
   const toast = useToast();
-  const [data, setData] = useState<PenilaianPelatihView[]>([]);
-  const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { penilaian: data, isLoading: loadingPenilaian, mutatePenilaian } = usePenilaian();
+  const { pelatih: allPelatih, isLoading: loadingPelatih } = usePelatih();
+  const pelatihList = useMemo(
+    () => allPelatih.filter((p) => p.status !== 'Nonaktif'),
+    [allPelatih]
+  );
+  const loading = loadingPenilaian || loadingPelatih;
 
   // Form states
   const [pelatihId, setPelatihId] = useState('');
@@ -50,31 +52,7 @@ export default function PenilaianPelatihPage() {
   const canGrade = role === 'Owner' || role === 'Admin';
   const displayName = profile?.nama_tampilan || profile?.username || 'Admin KESIT';
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [penilaianRes, pelatihRes] = await Promise.all([
-        getPenilaianAction(),
-        getPelatihAction(),
-      ]);
 
-      if (penilaianRes.success && penilaianRes.data) {
-        setData(penilaianRes.data);
-      }
-      if (pelatihRes.success && pelatihRes.data) {
-        const available = pelatihRes.data.filter((p) => p.status !== 'Nonaktif');
-        setPelatihList(available);
-      }
-    } catch (err) {
-      console.error('Failed to load penilaian:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Keyboard shortcut: Escape to close modal
   useEffect(() => {
@@ -227,7 +205,7 @@ export default function PenilaianPelatihPage() {
 
       toast.success('Penilaian pelatih berhasil disimpan.');
       resetForm();
-      await loadData();
+      await mutatePenilaian();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       toast.error(message);

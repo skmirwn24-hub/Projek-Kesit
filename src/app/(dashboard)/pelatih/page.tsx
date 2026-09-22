@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { usePelatih } from '@/hooks/use-pelatih';
 import {
-  getPelatihAction,
   createPelatihAction,
   updatePelatihAction,
 } from '@/server/actions/pelatih.actions';
@@ -16,8 +16,7 @@ import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 export default function PelatihPage() {
   const { profile, role } = useAuth();
   const toast = useToast();
-  const [data, setData] = useState<Pelatih[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pelatih: data, isLoading: loading, mutatePelatih } = usePelatih();
 
   // Filters
   const [search, setSearch] = useState('');
@@ -42,25 +41,6 @@ export default function PelatihPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const canManage = role === 'Owner' || role === 'Admin';
-  const displayName = profile?.nama_tampilan || profile?.username || 'Admin KESIT';
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const res = await getPelatihAction();
-      if (res.success && res.data) {
-        setData(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load coaches:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Keyboard shortcut: Escape to close modals
   useEffect(() => {
@@ -193,7 +173,7 @@ export default function PelatihPage() {
       }
 
       setFormModalOpen(false);
-      await loadData();
+      await mutatePelatih();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       toast.error(message);

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createClient } from '@/server/supabase/server';
 import * as userRepo from '@/server/repositories/user.repository';
 import { UserProfile } from '@/types/auth';
@@ -51,22 +52,24 @@ export async function loginWithIdentifier(
   return { success: true, profile };
 }
 
-export async function getCurrentUser(): Promise<{
-  user: User | null;
-  profile: UserProfile | null;
-}> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export const getCurrentUser = cache(
+  async (): Promise<{
+    user: User | null;
+    profile: UserProfile | null;
+  }> => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { user: null, profile: null };
+    if (!user) {
+      return { user: null, profile: null };
+    }
+
+    const profile = await userRepo.getUserProfile(user.id);
+    return { user, profile };
   }
-
-  const profile = await userRepo.getUserProfile(user.id);
-  return { user, profile };
-}
+);
 
 export async function logoutUser(): Promise<void> {
   const supabase = await createClient();
