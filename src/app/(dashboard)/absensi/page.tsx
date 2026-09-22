@@ -97,9 +97,9 @@ export default function AbsensiPage() {
   const [tahun, setTahun] = useState(now.getFullYear());
   const [selectedSesi, setSelectedSesi] = useState(1);
 
-  // For Owner/Admin: pilih pelatih
+  // For Owner/Admin: pilih pelatih (default: 'ALL' to show all students)
   const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
-  const [selectedPelatihId, setSelectedPelatihId] = useState<string>('');
+  const [selectedPelatihId, setSelectedPelatihId] = useState<string>('ALL');
 
   // Pelatih pengganti (per-tab)
   const [penggantiPelatihId, setPenggantiPelatihId] = useState<string>('');
@@ -117,7 +117,7 @@ export default function AbsensiPage() {
   // Derive pelatih pemilik ID to use
   const activePelatihId = useMemo(() => {
     if (isPelatih) return profile?.pelatih_id ?? '';
-    return selectedPelatihId;
+    return selectedPelatihId || 'ALL';
   }, [isPelatih, profile, selectedPelatihId]);
 
   // Today for Prestasi
@@ -125,30 +125,27 @@ export default function AbsensiPage() {
   const isTodaySenin = isSenin(todayDate);
 
   // -------------------------------------------------------
-  // Load pelatih list (Owner/Admin only)
+  // Load pelatih list
   // -------------------------------------------------------
   useEffect(() => {
-    if (!isAdminOrOwner) return;
     getPelatihAction().then((res) => {
       if (res.success && res.data) {
-        const aktif = res.data.filter((p) => p.status === 'Aktif');
-        setPelatihList(aktif);
-        if (aktif.length > 0) setSelectedPelatihId(aktif[0].id);
+        const available = res.data.filter((p) => p.status !== 'Nonaktif');
+        setPelatihList(available);
       }
     });
-  }, [isAdminOrOwner]);
+  }, []);
 
   // -------------------------------------------------------
   // Load siswa untuk absensi
   // -------------------------------------------------------
   const loadSiswa = useCallback(async () => {
-    if (!activePelatihId) return;
     setLoading(true);
     setSiswaList([]);
 
     try {
       const res = await getSiswaUntukAbsensiAction({
-        pelatihPemilikId: activePelatihId,
+        pelatihPemilikId: activePelatihId === 'ALL' ? null : activePelatihId,
         kategori: activeTab,
         bulan,
         tahun,
@@ -192,11 +189,12 @@ export default function AbsensiPage() {
     }
 
     // Absen baru
+    const coachToRecord = penggantiPelatihId || (activePelatihId !== 'ALL' && activePelatihId ? activePelatihId : siswa.pelatih_pemilik_id) || null;
     setSaving(true);
     const res = await absenSiswaAction({
       siswa_id: siswa.siswa_id,
       paket_siswa_id: siswa.paket_siswa_id,
-      pelatih_id: penggantiPelatihId || activePelatihId || null,
+      pelatih_id: coachToRecord,
       tanggal: activeTab === 'Prestasi' ? todayDate : `${tahun}-${String(bulan).padStart(2,'0')}-01`,
       nomor_sesi: activeTab !== 'Prestasi' ? selectedSesi : null,
       kategori: activeTab,
@@ -218,11 +216,12 @@ export default function AbsensiPage() {
   // -------------------------------------------------------
   const handleTidakHadir = async (siswa: SiswaAbsensiEnriched) => {
     if (!profile) return;
+    const coachToRecord = penggantiPelatihId || (activePelatihId !== 'ALL' && activePelatihId ? activePelatihId : siswa.pelatih_pemilik_id) || null;
     setSaving(true);
     const res = await absenSiswaAction({
       siswa_id: siswa.siswa_id,
       paket_siswa_id: siswa.paket_siswa_id,
-      pelatih_id: penggantiPelatihId || activePelatihId || null,
+      pelatih_id: coachToRecord,
       tanggal: activeTab === 'Prestasi' ? todayDate : `${tahun}-${String(bulan).padStart(2,'0')}-01`,
       nomor_sesi: activeTab !== 'Prestasi' ? selectedSesi : null,
       kategori: activeTab,
@@ -249,7 +248,7 @@ export default function AbsensiPage() {
       bulan,
       tahun,
       kategori: activeTab,
-      filterPelatihId: isAdminOrOwner ? (selectedPelatihId || null) : null,
+      filterPelatihId: isAdminOrOwner && selectedPelatihId !== 'ALL' ? (selectedPelatihId || null) : null,
     });
     setLoadingRekap(false);
     if (res.success && res.data) {
@@ -308,15 +307,18 @@ export default function AbsensiPage() {
           {isAdminOrOwner && (
             <div className="absensi-pelatih-selector">
               <label className="absensi-label">
-                <User size={14} /> Pilih Pelatih
+                <User size={14} /> Filter Pelatih
               </label>
               <select
                 className="absensi-select"
                 value={selectedPelatihId}
                 onChange={(e) => setSelectedPelatihId(e.target.value)}
               >
+                <option value="ALL">Semua Pelatih & Siswa</option>
                 {pelatihList.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nama}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.nama} ({p.status})
+                  </option>
                 ))}
               </select>
             </div>
@@ -515,10 +517,13 @@ export default function AbsensiPage() {
                         {activeTab === 'Prestasi' && (
                           <> · <strong>{siswa.kuota_terpakai}×</strong> bulan ini</>
                         )}
+                        {siswa.pelatih_pemilik && (
+                          <> · Pelatih: <strong>{siswa.pelatih_pemilik}</strong></>
+                        )}
                       </span>
-                      {sudahAbsen && siswa.pelatih_mengajar_id && siswa.pelatih_mengajar_id !== activePelatihId && (
+                      {sudahAbsen && siswa.pelatih_mengajar_id && siswa.pelatih_mengajar_id !== siswa.pelatih_pemilik_id && (
                         <span className="absensi-student-pengganti">
-                          Diajar oleh: {getPelatihName(siswa.pelatih_mengajar_id)}
+                          Pengganti: {getPelatihName(siswa.pelatih_mengajar_id)}
                         </span>
                       )}
                     </div>

@@ -564,9 +564,23 @@ DECLARE
   v_count INTEGER;
   v_kuitansi TEXT;
 BEGIN
-  -- Generate ID siswa (SIS000001, SIS000002, ...)
-  SELECT COUNT(*) + 1 INTO v_count FROM public.siswa;
+  -- Generate unique ID siswa safely
+  SELECT COALESCE(
+    MAX(
+      CASE 
+        WHEN id_siswa ~ '^SIS[0-9]+$' THEN SUBSTRING(id_siswa FROM 4)::INTEGER 
+        ELSE 0 
+      END
+    ), 
+    0
+  ) + 1 INTO v_count FROM public.siswa;
   v_id_siswa := 'SIS' || LPAD(v_count::TEXT, 6, '0');
+
+  -- Safety loop: ensure ID does not already exist
+  WHILE EXISTS (SELECT 1 FROM public.siswa WHERE id_siswa = v_id_siswa) LOOP
+    v_count := v_count + 1;
+    v_id_siswa := 'SIS' || LPAD(v_count::TEXT, 6, '0');
+  END LOOP;
 
   -- Insert siswa
   INSERT INTO public.siswa (
@@ -599,11 +613,11 @@ BEGIN
   INSERT INTO public.pembayaran_siswa (
     siswa_id, paket_siswa_id, nomor_kuitansi, nominal_dibayar,
     sisa_tagihan, status_pembayaran, metode_pembayaran, admin_penerima,
-    tanggal_transaksi
+    tanggal_transaksi, harga_paket, biaya_request_pelatih, diskon, total_tagihan
   ) VALUES (
     v_siswa_id, v_paket_id, v_kuitansi, p_nominal_dibayar,
     p_sisa_tagihan, p_status_pembayaran, p_metode_pembayaran, p_admin_penerima,
-    p_tanggal_daftar
+    p_tanggal_daftar, p_harga_paket, p_biaya_request_pelatih, p_diskon, p_total_tagihan
   );
 
   -- Log riwayat perubahan siswa
@@ -1094,15 +1108,34 @@ LEFT JOIN public.paket_siswa ps ON ps.id = ab.paket_siswa_id;
 
 CREATE OR REPLACE VIEW public.v_siswa_untuk_absensi AS
 SELECT
-  s.id AS siswa_id, s.id_siswa, s.nama_lengkap, s.nama_panggilan,
-  s.pelatih_pemilik_id, pp.nama AS pelatih_pemilik,
-  ps.id AS paket_siswa_id, ps.kelas AS kategori,
-  ps.kuota_total, ps.kuota_terpakai, ps.nama_paket
+  s.id AS siswa_id,
+  s.id_siswa,
+  s.nama_lengkap,
+  s.nama_panggilan,
+  s.pelatih_pemilik_id,
+  COALESCE(pp.nama, 'Belum Ditentukan') AS pelatih_pemilik,
+  COALESCE(ps.id, s.id) AS paket_siswa_id,
+  CASE 
+    WHEN ps.kelas ILIKE '%Private%' AND ps.kelas NOT ILIKE '%Semi%' THEN 'Private'
+    WHEN ps.kelas ILIKE '%Prestasi%' THEN 'Prestasi'
+    ELSE 'Reguler'
+  END AS kategori,
+  COALESCE(ps.kuota_total, 
+    CASE 
+      WHEN ps.kelas ILIKE '%Private%' THEN 10
+      WHEN ps.kelas ILIKE '%Prestasi%' THEN 16
+      ELSE 6
+    END
+  ) AS kuota_total,
+  COALESCE(ps.kuota_terpakai, 0) AS kuota_terpakai,
+  COALESCE(ps.nama_paket, 'Paket Standar') AS nama_paket
 FROM public.siswa s
 LEFT JOIN public.pelatih pp ON pp.id = s.pelatih_pemilik_id
 LEFT JOIN LATERAL (
-  SELECT * FROM public.paket_siswa ps2
-  WHERE ps2.siswa_id = s.id AND ps2.status_paket = 'Aktif'
-  ORDER BY ps2.created_at DESC LIMIT 1
+  SELECT *
+  FROM public.paket_siswa ps2
+  WHERE ps2.siswa_id = s.id
+  ORDER BY ps2.created_at DESC
+  LIMIT 1
 ) ps ON true
-WHERE s.status_siswa = 'Aktif' AND ps.id IS NOT NULL;
+WHERE s.status_siswa = 'Aktif';

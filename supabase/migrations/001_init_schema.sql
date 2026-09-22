@@ -564,8 +564,16 @@ DECLARE
   v_count INTEGER;
   v_kuitansi TEXT;
 BEGIN
-  -- Generate ID siswa (SIS000001, SIS000002, ...)
-  SELECT COUNT(*) + 1 INTO v_count FROM public.siswa;
+  -- Generate unique ID siswa safely
+  SELECT COALESCE(
+    MAX(
+      CASE 
+        WHEN id_siswa ~ '^SIS[0-9]+$' THEN SUBSTRING(id_siswa FROM 4)::INTEGER 
+        ELSE 0 
+      END
+    ), 
+    0
+  ) + 1 INTO v_count FROM public.siswa;
   v_id_siswa := 'SIS' || LPAD(v_count::TEXT, 6, '0');
 
   -- Insert siswa
@@ -599,11 +607,11 @@ BEGIN
   INSERT INTO public.pembayaran_siswa (
     siswa_id, paket_siswa_id, nomor_kuitansi, nominal_dibayar,
     sisa_tagihan, status_pembayaran, metode_pembayaran, admin_penerima,
-    tanggal_transaksi
+    tanggal_transaksi, harga_paket, biaya_request_pelatih, diskon, total_tagihan
   ) VALUES (
     v_siswa_id, v_paket_id, v_kuitansi, p_nominal_dibayar,
     p_sisa_tagihan, p_status_pembayaran, p_metode_pembayaran, p_admin_penerima,
-    p_tanggal_daftar
+    p_tanggal_daftar, p_harga_paket, p_biaya_request_pelatih, p_diskon, p_total_tagihan
   );
 
   -- Log riwayat perubahan siswa

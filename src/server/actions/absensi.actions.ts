@@ -15,7 +15,7 @@ import type { SiswaAbsensiEnriched } from '@/server/repositories/absensi.reposit
 // Ambil daftar siswa dengan status absensi untuk sesi tertentu
 // --------------------------------------------------------
 export async function getSiswaUntukAbsensiAction(params: {
-  pelatihPemilikId: string;
+  pelatihPemilikId?: string | null;
   kategori: KategoriKelas;
   bulan: number;
   tahun: number;

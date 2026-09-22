@@ -11,7 +11,7 @@ const HARI_LIBUR_PRESTASI = 1; // 0=Minggu, 1=Senin, ..., 6=Sabtu
 // Ambil daftar siswa (dengan status absensi) untuk pelatih & kategori
 // --------------------------------------------------------
 export async function getSiswaUntukAbsensi(
-  pelatihPemilikId: string,
+  pelatihPemilikId: string | null | undefined,
   kategori: KategoriKelas,
   bulan: number,
   tahun: number,

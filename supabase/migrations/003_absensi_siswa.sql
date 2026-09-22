@@ -36,7 +36,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_absensi_siswa_harian
 
 -- 1 nomor sesi per siswa per bulan per kategori (untuk Reguler & Private)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_absensi_sesi_bulanan
-  ON public.absensi_siswa (siswa_id, date_trunc('month', tanggal)::DATE, nomor_sesi, kategori)
+  ON public.absensi_siswa (
+    siswa_id,
+    EXTRACT(YEAR FROM tanggal),
+    EXTRACT(MONTH FROM tanggal),
+    nomor_sesi,
+    kategori
+  )
   WHERE nomor_sesi IS NOT NULL;
 
 -- --------------------------------------------------------
@@ -298,21 +304,30 @@ SELECT
   s.nama_lengkap,
   s.nama_panggilan,
   s.pelatih_pemilik_id,
-  pp.nama AS pelatih_pemilik,
-  ps.id AS paket_siswa_id,
-  ps.kelas AS kategori,
-  ps.kuota_total,
-  ps.kuota_terpakai,
-  ps.nama_paket
+  COALESCE(pp.nama, 'Belum Ditentukan') AS pelatih_pemilik,
+  COALESCE(ps.id, s.id) AS paket_siswa_id,
+  CASE 
+    WHEN ps.kelas ILIKE '%Private%' AND ps.kelas NOT ILIKE '%Semi%' THEN 'Private'
+    WHEN ps.kelas ILIKE '%Prestasi%' THEN 'Prestasi'
+    ELSE 'Reguler'
+  END AS kategori,
+  COALESCE(ps.kuota_total, 
+    CASE 
+      WHEN ps.kelas ILIKE '%Private%' THEN 10
+      WHEN ps.kelas ILIKE '%Prestasi%' THEN 16
+      ELSE 6
+    END
+  ) AS kuota_total,
+  COALESCE(ps.kuota_terpakai, 0) AS kuota_terpakai,
+  COALESCE(ps.nama_paket, 'Paket Standar') AS nama_paket
 FROM public.siswa s
 LEFT JOIN public.pelatih pp ON pp.id = s.pelatih_pemilik_id
 LEFT JOIN LATERAL (
   SELECT *
   FROM public.paket_siswa ps2
   WHERE ps2.siswa_id = s.id
-    AND ps2.status_paket = 'Aktif'
   ORDER BY ps2.created_at DESC
   LIMIT 1
 ) ps ON true
-WHERE s.status_siswa = 'Aktif'
-  AND ps.id IS NOT NULL;
+WHERE s.status_siswa = 'Aktif';
+
