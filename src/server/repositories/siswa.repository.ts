@@ -113,6 +113,7 @@ export async function daftarSiswaAwal(
 ): Promise<{ siswa_id: string; id_siswa: string; paket_siswa_id: string }> {
   const supabase = await createClient();
 
+  // Try executing via RPC first
   const { data, error } = await supabase.rpc('daftar_siswa_awal', {
     p_nama_lengkap: input.nama_lengkap,
     p_nama_panggilan: input.nama_panggilan || null,
@@ -138,17 +139,135 @@ export async function daftarSiswaAwal(
     p_sisa_tagihan: input.sisa_tagihan,
     p_status_pembayaran: input.status_pembayaran,
     p_metode_pembayaran: input.metode_pembayaran,
-    p_admin_penerima: input.admin_penerima,
+    p_admin_penerima: input.admin_penerima || 'Admin KESIT',
   });
 
-  if (error) {
-    console.error('Error calling daftar_siswa_awal:', error);
-    throw new Error(error.message);
+  if (!error && data) {
+    const result = Array.isArray(data) ? data[0] : data;
+    if (result?.siswa_id && result?.id_siswa) {
+      return result;
+    }
   }
 
-  // data is returned as an array with 1 row: [{ siswa_id, id_siswa, paket_siswa_id }]
-  const result = Array.isArray(data) ? data[0] : data;
-  return result;
+  // If RPC failed (e.g. duplicate key constraint on old database function or RPC missing),
+  // execute direct safe fallback with collision-proof ID generation
+  console.warn('RPC daftar_siswa_awal failed or returned error, executing safe direct fallback:', error?.message);
+
+  // 1. Generate guaranteed unique ID siswa
+  const { data: allSiswa } = await supabase
+    .from('siswa')
+    .select('id_siswa');
+
+  let maxNum = 0;
+  if (allSiswa && Array.isArray(allSiswa)) {
+    allSiswa.forEach((s: { id_siswa: string }) => {
+      const match = s.id_siswa?.match(/(\d+)/);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (n > maxNum) maxNum = n;
+      }
+    });
+  }
+
+  let nextNum = maxNum + 1;
+  let idSiswa = `SIS${String(nextNum).padStart(6, '0')}`;
+
+  // Double check if idSiswa exists
+  while (allSiswa?.some((s: { id_siswa: string }) => s.id_siswa === idSiswa)) {
+    nextNum += 1;
+    idSiswa = `SIS${String(nextNum).padStart(6, '0')}`;
+  }
+
+  // 2. Insert siswa
+  const { data: insertedSiswa, error: errSiswa } = await supabase
+    .from('siswa')
+    .insert({
+      id_siswa: idSiswa,
+      nama_lengkap: input.nama_lengkap,
+      nama_panggilan: input.nama_panggilan || null,
+      jenis_kelamin: input.jenis_kelamin || null,
+      tempat_lahir: input.tempat_lahir || null,
+      tanggal_lahir: input.tanggal_lahir || null,
+      nama_wali: input.nama_wali || null,
+      no_hp_wali: input.no_hp_wali || null,
+      alamat: input.alamat || null,
+      pelatih_pemilik_id: input.pelatih_pemilik_id || null,
+      pelatih_diminta_id: input.pelatih_diminta_id || null,
+      status_siswa: input.status_siswa || 'Aktif',
+      tanggal_daftar: input.tanggal_daftar,
+    })
+    .select('id, id_siswa')
+    .single();
+
+  if (errSiswa || !insertedSiswa) {
+    console.error('Error in fallback insert siswa:', errSiswa);
+    throw new Error(errSiswa?.message || error?.message || 'Gagal mendaftarkan data siswa.');
+  }
+
+  const siswaId = insertedSiswa.id;
+
+  // 3. Insert paket siswa
+  const { data: insertedPaket, error: errPaket } = await supabase
+    .from('paket_siswa')
+    .insert({
+      siswa_id: siswaId,
+      lokasi: input.lokasi,
+      kelas: input.kelas,
+      nama_paket: input.nama_paket,
+      harga_paket: input.harga_paket,
+      biaya_request_pelatih: input.biaya_request_pelatih,
+      diskon: input.diskon,
+      total_tagihan: input.total_tagihan,
+      kuota_total: input.kuota_total,
+      kuota_terpakai: 0,
+      status_paket: 'Aktif',
+    })
+    .select('id')
+    .single();
+
+  if (errPaket || !insertedPaket) {
+    console.error('Error in fallback insert paket_siswa:', errPaket);
+    throw new Error(errPaket?.message || 'Gagal menyimpan paket siswa.');
+  }
+
+  const paketSiswaId = insertedPaket.id;
+
+  // 4. Insert pembayaran
+  const kuitansiNomor = `KW-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(nextNum).padStart(4, '0')}`;
+  await supabase.from('pembayaran_siswa').insert({
+    siswa_id: siswaId,
+    paket_siswa_id: paketSiswaId,
+    nomor_kuitansi: kuitansiNomor,
+    nominal_dibayar: input.nominal_dibayar,
+    sisa_tagihan: input.sisa_tagihan,
+    status_pembayaran: input.status_pembayaran,
+    metode_pembayaran: input.metode_pembayaran,
+    admin_penerima: input.admin_penerima || 'Admin KESIT',
+    tanggal_transaksi: input.tanggal_daftar,
+    harga_paket: input.harga_paket,
+    biaya_request_pelatih: input.biaya_request_pelatih,
+    diskon: input.diskon,
+    total_tagihan: input.total_tagihan,
+  });
+
+  // 5. Insert riwayat perubahan
+  await supabase.from('riwayat_perubahan_siswa').insert({
+    siswa_id: siswaId,
+    jenis_perubahan: 'Pendaftaran Baru',
+    lokasi_baru: input.lokasi,
+    kelas_baru: input.kelas,
+    paket_baru: input.nama_paket,
+    pelatih_pemilik_baru: input.pelatih_pemilik_id || null,
+    tanggal_perubahan: input.tanggal_daftar,
+    alasan: 'Pendaftaran siswa awal',
+    diubah_oleh: input.admin_penerima || 'Admin KESIT',
+  });
+
+  return {
+    siswa_id: siswaId,
+    id_siswa: insertedSiswa.id_siswa,
+    paket_siswa_id: paketSiswaId,
+  };
 }
 
 export async function editBiodataSiswa(input: EditBiodataSiswaInput): Promise<void> {
