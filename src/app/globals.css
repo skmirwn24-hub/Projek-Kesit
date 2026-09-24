@@ -2148,8 +2148,14 @@ tr:hover td {
   justify-content: center;
 }
 
-.absensi-btn-rekap {
+.absensi-header-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.absensi-btn-rekap {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -2168,6 +2174,24 @@ tr:hover td {
   border-color: var(--color-primary);
   color: var(--text-main);
   background: var(--bg-panel-hover);
+}
+
+.absensi-btn-rekap:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .absensi-tabs {

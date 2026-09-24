@@ -81,6 +81,45 @@ function exportRekapCSV(rekap: AbsensiSiswaView[], bulan: number, tahun: number,
 }
 
 // -------------------------------------------------------
+// Client-side in-memory cache for ultra-fast session & tab switching
+// -------------------------------------------------------
+const absensiClientCache = new Map<string, { data: SiswaAbsensiEnriched[]; timestamp: number }>();
+const rekapClientCache = new Map<string, { data: AbsensiSiswaView[]; timestamp: number }>();
+
+function getCachedAbsensi(key: string): { data: SiswaAbsensiEnriched[]; isFresh: boolean } | null {
+  const cached = absensiClientCache.get(key);
+  if (!cached) return null;
+  return {
+    data: cached.data,
+    isFresh: Date.now() - cached.timestamp < 45_000,
+  };
+}
+
+function setCachedAbsensi(key: string, data: SiswaAbsensiEnriched[]): void {
+  absensiClientCache.set(key, { data, timestamp: Date.now() });
+}
+
+function hasCachedAbsensi(key: string): boolean {
+  return absensiClientCache.has(key);
+}
+
+function getCachedRekap(key: string): AbsensiSiswaView[] | null {
+  const cached = rekapClientCache.get(key);
+  if (cached && Date.now() - cached.timestamp < 60_000) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedRekap(key: string, data: AbsensiSiswaView[]): void {
+  rekapClientCache.set(key, { data, timestamp: Date.now() });
+}
+
+function invalidateRekapCache(): void {
+  rekapClientCache.clear();
+}
+
+// -------------------------------------------------------
 // Main Component
 // -------------------------------------------------------
 export default function AbsensiPage() {
@@ -121,6 +160,14 @@ export default function AbsensiPage() {
     return 'ALL';
   }, [selectedPelatihId, isPelatih, profile?.pelatih_id]);
 
+  // Helper untuk cache key yang konsisten
+  const buildCacheKey = useCallback(
+    (tab: KategoriKelas, pelatihId: string, b: number, t: number, sesiOrDate: number | string | null) => {
+      return `${tab}:${pelatihId}:${b}:${t}:${sesiOrDate ?? 'all'}`;
+    },
+    []
+  );
+
   // Today for Prestasi
   const todayDate = todayISO();
   const isTodaySenin = isSenin(todayDate);
@@ -138,31 +185,51 @@ export default function AbsensiPage() {
   }, []);
 
   // -------------------------------------------------------
-  // Load siswa untuk absensi
+  // Load siswa untuk absensi dengan Caching & SWR
   // -------------------------------------------------------
-  const loadSiswa = useCallback(async () => {
-    setLoading(true);
-    setSiswaList([]);
+  const loadSiswa = useCallback(
+    async (forceFresh = false) => {
+      const sesiOrDate = activeTab === 'Prestasi' ? todayDate : selectedSesi;
+      const cacheKey = buildCacheKey(activeTab, activePelatihId, bulan, tahun, sesiOrDate);
+      const cached = getCachedAbsensi(cacheKey);
 
-    try {
-      const res = await getSiswaUntukAbsensiAction({
-        pelatihPemilikId: activePelatihId === 'ALL' ? null : activePelatihId,
-        kategori: activeTab,
-        bulan,
-        tahun,
-        nomorSesi: activeTab !== 'Prestasi' ? selectedSesi : null,
-        tanggal: activeTab === 'Prestasi' ? todayDate : null,
-      });
+      if (cached && !forceFresh) {
+        // INSTANT RENDER DARI CACHE (0ms, tanpa flicker skeleton)
+        setSiswaList(cached.data);
+        setLoading(false);
 
-      if (res.success && res.data) {
-        setSiswaList(res.data);
-      } else {
-        toast.error(res.error ?? 'Gagal memuat daftar siswa');
+        // Jika data masih segar, tidak perlu network fetch lagi
+        if (cached.isFresh) {
+          return;
+        }
+      } else if (!cached) {
+        // Hanya tampilkan skeleton jika benar-benar belum pernah di-fetch
+        setLoading(true);
+        setSiswaList([]);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [activePelatihId, activeTab, bulan, tahun, selectedSesi, todayDate, toast]);
+
+      try {
+        const res = await getSiswaUntukAbsensiAction({
+          pelatihPemilikId: activePelatihId === 'ALL' ? null : activePelatihId,
+          kategori: activeTab,
+          bulan,
+          tahun,
+          nomorSesi: activeTab !== 'Prestasi' ? selectedSesi : null,
+          tanggal: activeTab === 'Prestasi' ? todayDate : null,
+        });
+
+        if (res.success && res.data) {
+          setCachedAbsensi(cacheKey, res.data);
+          setSiswaList(res.data);
+        } else if (!cached) {
+          toast.error(res.error ?? 'Gagal memuat daftar siswa');
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activePelatihId, activeTab, bulan, tahun, selectedSesi, todayDate, buildCacheKey, toast]
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -177,6 +244,36 @@ export default function AbsensiPage() {
     };
   }, [loadSiswa]);
 
+  // -------------------------------------------------------
+  // Background Pre-fetching Sesi Berikutnya
+  // Mengambil sesi berikutnya secara diam-diam sehingga transisi sesi instan
+  // -------------------------------------------------------
+  useEffect(() => {
+    if (activeTab === 'Prestasi' || loading) return;
+    const maxSesi = getMaxSesi(activeTab);
+    if (selectedSesi < maxSesi) {
+      const nextSesi = selectedSesi + 1;
+      const nextKey = buildCacheKey(activeTab, activePelatihId, bulan, tahun, nextSesi);
+      if (!hasCachedAbsensi(nextKey)) {
+        const timer = setTimeout(() => {
+          getSiswaUntukAbsensiAction({
+            pelatihPemilikId: activePelatihId === 'ALL' ? null : activePelatihId,
+            kategori: activeTab,
+            bulan,
+            tahun,
+            nomorSesi: nextSesi,
+            tanggal: null,
+          }).then((res) => {
+            if (res.success && res.data) {
+              setCachedAbsensi(nextKey, res.data);
+            }
+          });
+        }, 400);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [activeTab, activePelatihId, bulan, tahun, selectedSesi, loading, buildCacheKey]);
+
   // Cek apakah user berhak mengubah absensi siswa ini
   const canEditSiswa = useCallback(
     (siswa: SiswaAbsensiEnriched) => {
@@ -190,7 +287,7 @@ export default function AbsensiPage() {
   );
 
   // -------------------------------------------------------
-  // Toggle absensi satu siswa
+  // Toggle absensi satu siswa (Optimistic Update)
   // -------------------------------------------------------
   const handleToggleAbsen = async (siswa: SiswaAbsensiEnriched) => {
     if (!profile) return;
@@ -199,22 +296,62 @@ export default function AbsensiPage() {
       return;
     }
 
-    // Jika sudah terabsen → batalkan
-    if (siswa.absensi_id) {
+    const sesiOrDate = activeTab === 'Prestasi' ? todayDate : selectedSesi;
+    const cacheKey = buildCacheKey(activeTab, activePelatihId, bulan, tahun, sesiOrDate);
+    const prevList = [...siswaList];
+    const isBatal = !!siswa.absensi_id;
+    const oldAbsensiId = siswa.absensi_id;
+
+    // Bersihkan cache rekap agar tersinkronisasi
+    invalidateRekapCache();
+
+    if (isBatal) {
+      // 1. Optimistic Cancel: update UI instan 0ms
+      const optimisticList = siswaList.map((s) => {
+        if (s.siswa_id !== siswa.siswa_id) return s;
+        return {
+          ...s,
+          absensi_id: null,
+          status_hadir: null,
+          kuota_terpakai: s.status_hadir === 'Hadir' ? Math.max(0, s.kuota_terpakai - 1) : s.kuota_terpakai,
+        };
+      });
+
+      setSiswaList(optimisticList);
+      setCachedAbsensi(cacheKey, optimisticList);
+
       setSaving(true);
-      const res = await batalkanAbsenAction({ absensi_id: siswa.absensi_id });
+      const res = await batalkanAbsenAction({ absensi_id: oldAbsensiId! });
       setSaving(false);
+
       if (res.success) {
         toast.success(`Absensi ${siswa.nama_lengkap} dibatalkan`);
-        loadSiswa();
       } else {
+        // Rollback ke state sebelumnya jika gagal
+        setSiswaList(prevList);
+        setCachedAbsensi(cacheKey, prevList);
         toast.error(res.error ?? 'Gagal membatalkan absensi');
       }
       return;
     }
 
-    // Absen baru
+    // 2. Optimistic Hadir: update UI instan 0ms
     const coachToRecord = penggantiPelatihId || (activePelatihId !== 'ALL' && activePelatihId ? activePelatihId : siswa.pelatih_pemilik_id) || null;
+    const tempId = `temp-${siswa.siswa_id}`;
+    const optimisticList = siswaList.map((s) => {
+      if (s.siswa_id !== siswa.siswa_id) return s;
+      return {
+        ...s,
+        absensi_id: tempId,
+        status_hadir: 'Hadir' as const,
+        kuota_terpakai: s.status_hadir === 'Hadir' ? s.kuota_terpakai : s.kuota_terpakai + 1,
+        pelatih_mengajar_id: coachToRecord,
+      };
+    });
+
+    setSiswaList(optimisticList);
+    setCachedAbsensi(cacheKey, optimisticList);
+
     setSaving(true);
     const res = await absenSiswaAction({
       siswa_id: siswa.siswa_id,
@@ -228,16 +365,24 @@ export default function AbsensiPage() {
     });
     setSaving(false);
 
-    if (res.success) {
+    if (res.success && res.absensiId) {
       toast.success(`${siswa.nama_lengkap} — Hadir ✓`);
-      loadSiswa();
+      // Update real absensi_id dari database secara senyap
+      const confirmedList = optimisticList.map((s) =>
+        s.siswa_id === siswa.siswa_id ? { ...s, absensi_id: res.absensiId! } : s
+      );
+      setSiswaList(confirmedList);
+      setCachedAbsensi(cacheKey, confirmedList);
     } else {
+      // Rollback jika terjadi kesalahan
+      setSiswaList(prevList);
+      setCachedAbsensi(cacheKey, prevList);
       toast.error(res.error ?? 'Gagal menyimpan absensi');
     }
   };
 
   // -------------------------------------------------------
-  // Tandai Tidak Hadir
+  // Tandai Tidak Hadir (Optimistic Update)
   // -------------------------------------------------------
   const handleTidakHadir = async (siswa: SiswaAbsensiEnriched) => {
     if (!profile) return;
@@ -245,7 +390,31 @@ export default function AbsensiPage() {
       toast.error('Akses ditolak: Anda hanya dapat mencatat absensi siswa bimbingan Anda.');
       return;
     }
+
+    const sesiOrDate = activeTab === 'Prestasi' ? todayDate : selectedSesi;
+    const cacheKey = buildCacheKey(activeTab, activePelatihId, bulan, tahun, sesiOrDate);
+    const prevList = [...siswaList];
     const coachToRecord = penggantiPelatihId || (activePelatihId !== 'ALL' && activePelatihId ? activePelatihId : siswa.pelatih_pemilik_id) || null;
+    const tempId = `temp-${siswa.siswa_id}`;
+
+    // Bersihkan cache rekap agar tersinkronisasi
+    invalidateRekapCache();
+
+    const optimisticList = siswaList.map((s) => {
+      if (s.siswa_id !== siswa.siswa_id) return s;
+      const wasHadir = s.status_hadir === 'Hadir';
+      return {
+        ...s,
+        absensi_id: tempId,
+        status_hadir: 'Tidak Hadir' as const,
+        kuota_terpakai: wasHadir ? Math.max(0, s.kuota_terpakai - 1) : s.kuota_terpakai,
+        pelatih_mengajar_id: coachToRecord,
+      };
+    });
+
+    setSiswaList(optimisticList);
+    setCachedAbsensi(cacheKey, optimisticList);
+
     setSaving(true);
     const res = await absenSiswaAction({
       siswa_id: siswa.siswa_id,
@@ -259,21 +428,36 @@ export default function AbsensiPage() {
     });
     setSaving(false);
 
-    if (res.success) {
+    if (res.success && res.absensiId) {
       toast.success(`${siswa.nama_lengkap} — Tidak Hadir`);
-      loadSiswa();
+      const confirmedList = optimisticList.map((s) =>
+        s.siswa_id === siswa.siswa_id ? { ...s, absensi_id: res.absensiId! } : s
+      );
+      setSiswaList(confirmedList);
+      setCachedAbsensi(cacheKey, confirmedList);
     } else {
+      // Rollback jika terjadi kesalahan
+      setSiswaList(prevList);
+      setCachedAbsensi(cacheKey, prevList);
       toast.error(res.error ?? 'Gagal menyimpan absensi');
     }
   };
 
   // -------------------------------------------------------
-  // Load rekap
+  // Load rekap dengan Caching
   // -------------------------------------------------------
   const handleShowRekap = async () => {
     setShowRekap(true);
-    setLoadingRekap(true);
     const filterPelatih = activePelatihId === 'ALL' ? null : (activePelatihId || null);
+    const rekapKey = `${activeTab}:${activePelatihId}:${bulan}:${tahun}`;
+
+    const cached = getCachedRekap(rekapKey);
+    if (cached) {
+      setRekapData(cached);
+      return;
+    }
+
+    setLoadingRekap(true);
     const res = await getRekapAbsensiAction({
       bulan,
       tahun,
@@ -283,6 +467,7 @@ export default function AbsensiPage() {
     setLoadingRekap(false);
     if (res.success && res.data) {
       setRekapData(res.data);
+      setCachedRekap(rekapKey, res.data);
     } else {
       toast.error(res.error ?? 'Gagal memuat rekap');
     }
@@ -368,11 +553,22 @@ export default function AbsensiPage() {
             </div>
           )}
 
-          {/* Tombol rekap */}
-          <button className="absensi-btn-rekap" onClick={handleShowRekap}>
-            <TrendingUp size={14} />
-            Rekap Bulan Ini
-          </button>
+          {/* Tombol aksi: Segarkan & Rekap */}
+          <div className="absensi-header-actions">
+            <button
+              className="absensi-btn-rekap"
+              onClick={() => loadSiswa(true)}
+              title="Segarkan data terbaru dari server"
+              disabled={loading}
+            >
+              <RotateCcw size={14} className={loading ? 'spin-icon' : ''} />
+              Segarkan
+            </button>
+            <button className="absensi-btn-rekap" onClick={handleShowRekap}>
+              <TrendingUp size={14} />
+              Rekap Bulan Ini
+            </button>
+          </div>
         </div>
 
         {/* ===== TABS KATEGORI ===== */}
