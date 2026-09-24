@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  allowedDevOrigins: ['localhost:3000',"192.168.1.185:3000"],
+  allowedDevOrigins: ['localhost:3000',"192.168.1.185"],
   experimental: {
     optimizePackageImports: ['lucide-react', 'jspdf', 'jspdf-autotable'],
   },
