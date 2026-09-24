@@ -100,10 +100,16 @@ async function run() {
   try {
     const isOnly005006 = filterArg === '005+006' || filterArg === '005,006';
     const isOnly007 = filterArg === '007' || filterArg === '007_security' || filterArg === '007_security_hardening';
+    const isOnly008 = filterArg === '008' || filterArg === '008_allow_all_coaches_read_absensi';
 
     const steps = [];
 
-    if (isOnly007) {
+    if (isOnly008) {
+      steps.push({
+        name: 'Migrasi 008: Allow All Coaches Read Absensi (008_allow_all_coaches_read_absensi.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '008_allow_all_coaches_read_absensi.sql'),
+      });
+    } else if (isOnly007) {
       steps.push({
         name: 'Migrasi 007: Security Hardening (007_security_hardening.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '007_security_hardening.sql'),
@@ -137,6 +143,10 @@ async function run() {
       steps.push({
         name: 'Migrasi 007: Security Hardening (007_security_hardening.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '007_security_hardening.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 008: Allow All Coaches Read Absensi (008_allow_all_coaches_read_absensi.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '008_allow_all_coaches_read_absensi.sql'),
       });
     }
 

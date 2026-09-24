@@ -97,9 +97,9 @@ export default function AbsensiPage() {
   const [tahun, setTahun] = useState(now.getFullYear());
   const [selectedSesi, setSelectedSesi] = useState(1);
 
-  // For Owner/Admin: pilih pelatih (default: 'ALL' to show all students)
+  // For Owner/Admin/Pelatih: pilih pelatih (null = use role default: coach's own id for coach, 'ALL' for admin)
   const [pelatihList, setPelatihList] = useState<Pelatih[]>([]);
-  const [selectedPelatihId, setSelectedPelatihId] = useState<string>('ALL');
+  const [selectedPelatihId, setSelectedPelatihId] = useState<string | null>(null);
 
   // Pelatih pengganti (per-tab)
   const [penggantiPelatihId, setPenggantiPelatihId] = useState<string>('');
@@ -116,9 +116,10 @@ export default function AbsensiPage() {
 
   // Derive pelatih pemilik ID to use
   const activePelatihId = useMemo(() => {
-    if (isPelatih) return profile?.pelatih_id ?? '';
-    return selectedPelatihId || 'ALL';
-  }, [isPelatih, profile, selectedPelatihId]);
+    if (selectedPelatihId !== null) return selectedPelatihId;
+    if (isPelatih && profile?.pelatih_id) return profile.pelatih_id;
+    return 'ALL';
+  }, [selectedPelatihId, isPelatih, profile?.pelatih_id]);
 
   // Today for Prestasi
   const todayDate = todayISO();
@@ -161,7 +162,7 @@ export default function AbsensiPage() {
     } finally {
       setLoading(false);
     }
-  }, [activePelatihId, activeTab, bulan, tahun, selectedSesi, todayDate]);
+  }, [activePelatihId, activeTab, bulan, tahun, selectedSesi, todayDate, toast]);
 
   useEffect(() => {
     let ignore = false;
@@ -176,11 +177,27 @@ export default function AbsensiPage() {
     };
   }, [loadSiswa]);
 
+  // Cek apakah user berhak mengubah absensi siswa ini
+  const canEditSiswa = useCallback(
+    (siswa: SiswaAbsensiEnriched) => {
+      if (isAdminOrOwner) return true;
+      if (isPelatih && profile?.pelatih_id && siswa.pelatih_pemilik_id === profile.pelatih_id) {
+        return true;
+      }
+      return false;
+    },
+    [isAdminOrOwner, isPelatih, profile]
+  );
+
   // -------------------------------------------------------
   // Toggle absensi satu siswa
   // -------------------------------------------------------
   const handleToggleAbsen = async (siswa: SiswaAbsensiEnriched) => {
     if (!profile) return;
+    if (!canEditSiswa(siswa)) {
+      toast.error('Akses ditolak: Anda hanya dapat mencatat absensi siswa bimbingan Anda.');
+      return;
+    }
 
     // Jika sudah terabsen → batalkan
     if (siswa.absensi_id) {
@@ -224,6 +241,10 @@ export default function AbsensiPage() {
   // -------------------------------------------------------
   const handleTidakHadir = async (siswa: SiswaAbsensiEnriched) => {
     if (!profile) return;
+    if (!canEditSiswa(siswa)) {
+      toast.error('Akses ditolak: Anda hanya dapat mencatat absensi siswa bimbingan Anda.');
+      return;
+    }
     const coachToRecord = penggantiPelatihId || (activePelatihId !== 'ALL' && activePelatihId ? activePelatihId : siswa.pelatih_pemilik_id) || null;
     setSaving(true);
     const res = await absenSiswaAction({
@@ -252,11 +273,12 @@ export default function AbsensiPage() {
   const handleShowRekap = async () => {
     setShowRekap(true);
     setLoadingRekap(true);
+    const filterPelatih = activePelatihId === 'ALL' ? null : (activePelatihId || null);
     const res = await getRekapAbsensiAction({
       bulan,
       tahun,
       kategori: activeTab,
-      filterPelatihId: isAdminOrOwner && selectedPelatihId !== 'ALL' ? (selectedPelatihId || null) : null,
+      filterPelatihId: filterPelatih,
     });
     setLoadingRekap(false);
     if (res.success && res.data) {
@@ -311,26 +333,24 @@ export default function AbsensiPage() {
         {/* ===== HEADER CONTROLS ===== */}
         <div className="absensi-header-controls">
 
-          {/* Owner/Admin: pilih pelatih */}
-          {isAdminOrOwner && (
-            <div className="absensi-pelatih-selector">
-              <label className="absensi-label">
-                <User size={14} /> Filter Pelatih
-              </label>
-              <select
-                className="absensi-select"
-                value={selectedPelatihId}
-                onChange={(e) => setSelectedPelatihId(e.target.value)}
-              >
-                <option value="ALL">Semua Pelatih & Siswa</option>
-                {pelatihList.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nama} ({p.status})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Filter Pelatih (dapat diakses oleh Owner, Admin, dan semua Pelatih) */}
+          <div className="absensi-pelatih-selector">
+            <label className="absensi-label">
+              <User size={14} /> Filter Pelatih
+            </label>
+            <select
+              className="absensi-select"
+              value={selectedPelatihId || (isPelatih ? profile?.pelatih_id ?? 'ALL' : 'ALL')}
+              onChange={(e) => setSelectedPelatihId(e.target.value)}
+            >
+              <option value="ALL">Semua Pelatih & Siswa</option>
+              {pelatihList.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nama} {isPelatih && p.id === profile?.pelatih_id ? '★ (Siswa Saya)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Navigator bulan (hanya untuk Reguler & Private) */}
           {activeTab !== 'Prestasi' && (
@@ -538,7 +558,14 @@ export default function AbsensiPage() {
 
                     {/* Action buttons */}
                     <div className="absensi-student-actions">
-                      {sudahAbsen ? (
+                      {!canEditSiswa(siswa) ? (
+                        <span
+                          className="absensi-badge-readonly"
+                          title={`Hanya dapat diubah oleh pelatih pemilik (${siswa.pelatih_pemilik || '-'}) atau Admin/Owner`}
+                        >
+                          Read-Only
+                        </span>
+                      ) : sudahAbsen ? (
                         <button
                           className="absensi-btn-batal"
                           onClick={() => handleToggleAbsen(siswa)}

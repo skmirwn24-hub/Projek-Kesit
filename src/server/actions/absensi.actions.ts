@@ -62,7 +62,7 @@ export async function absenSiswaAction(
     };
   }
 
-  return absensiService.absenSiswa(parsed.data, profile.id, profile.role);
+  return absensiService.absenSiswa(parsed.data, profile.id, profile.role, profile.pelatih_id);
 }
 
 // --------------------------------------------------------
@@ -96,7 +96,7 @@ export async function getRekapAbsensiAction(params: {
   bulan: number;
   tahun: number;
   kategori?: KategoriKelas | null;
-  filterPelatihId?: string | null; // hanya berlaku untuk Owner/Admin
+  filterPelatihId?: string | null;
 }): Promise<{ success: boolean; data?: AbsensiSiswaView[]; error?: string }> {
   const { profile } = await getCurrentUser();
   if (!profile) {
@@ -104,7 +104,8 @@ export async function getRekapAbsensiAction(params: {
   }
 
   const isAdminView = profile.role === 'Owner' || profile.role === 'Admin';
-  const pelatihPemilikId = profile.pelatih_id || params.filterPelatihId || '';
+  const filterPelatih = params.filterPelatihId === 'ALL' ? null : (params.filterPelatihId ?? null);
+  const pelatihPemilikId = profile.pelatih_id || '';
 
   return absensiService.getRekapAbsensi(
     profile.role,
@@ -112,7 +113,7 @@ export async function getRekapAbsensiAction(params: {
     params.bulan,
     params.tahun,
     params.kategori,
-    isAdminView,
-    params.filterPelatihId
+    isAdminView || filterPelatih !== undefined,
+    filterPelatih
   );
 }

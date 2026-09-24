@@ -391,6 +391,12 @@ export async function absenSiswa(
     throw new Error(getMissingAbsensiMessage());
   }
 
+  if (error) {
+    if (/akses ditolak|permission denied|violates|bukan milik|hanya dapat/i.test(error.message)) {
+      throw new Error(error.message);
+    }
+  }
+
   console.warn('kesit_absen_siswa RPC not available or failed, executing direct upsert:', error?.message);
 
   // 2. Direct fallback into absensi_siswa
@@ -518,4 +524,19 @@ export async function isAbsensiOwnedByPelatih(
   if (error || !data) return false;
   const siswa = Array.isArray(data.siswa) ? data.siswa[0] : data.siswa;
   return siswa?.pelatih_pemilik_id === pelatihId;
+}
+
+export async function isSiswaOwnedByPelatih(
+  siswaId: string,
+  pelatihId: string
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('siswa')
+    .select('id, pelatih_pemilik_id')
+    .eq('id', siswaId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return data.pelatih_pemilik_id === pelatihId;
 }
