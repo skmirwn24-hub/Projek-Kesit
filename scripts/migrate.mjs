@@ -102,10 +102,16 @@ async function run() {
     const isOnly007 = filterArg === '007' || filterArg === '007_security' || filterArg === '007_security_hardening';
     const isOnly008 = filterArg === '008' || filterArg === '008_allow_all_coaches_read_absensi';
     const isOnly009 = filterArg === '009' || filterArg === '009_absensi_caching_performance';
+    const isOnly010 = filterArg === '010' || filterArg === '010_jadwal_pelatih';
 
     const steps = [];
 
-    if (isOnly009) {
+    if (isOnly010) {
+      steps.push({
+        name: 'Migrasi 010: Jadwal Pelatih (010_jadwal_pelatih.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '010_jadwal_pelatih.sql'),
+      });
+    } else if (isOnly009) {
       steps.push({
         name: 'Migrasi 009: Absensi Performance & Indexing (009_absensi_caching_performance.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '009_absensi_caching_performance.sql'),
@@ -157,6 +163,10 @@ async function run() {
       steps.push({
         name: 'Migrasi 009: Absensi Performance & Indexing (009_absensi_caching_performance.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '009_absensi_caching_performance.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 010: Jadwal Pelatih (010_jadwal_pelatih.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '010_jadwal_pelatih.sql'),
       });
     }
 
