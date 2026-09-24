@@ -29,5 +29,6 @@ export function canAccessPage(pathname: string, role: KesitRole): boolean {
     }
   }
 
-  return true;
+  // Default deny: rute yang tidak terdaftar hanya bisa diakses Owner
+  return role === 'Owner';
 }

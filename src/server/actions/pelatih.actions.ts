@@ -15,6 +15,11 @@ export async function getPelatihAction(): Promise<{
   data?: Pelatih[];
   error?: string;
 }> {
+  const { profile } = await getCurrentUser();
+  if (!profile) {
+    return { success: false, error: 'Sesi tidak valid, silakan login kembali.' };
+  }
+
   try {
     const data = await pelatihService.fetchPelatihList();
     return { success: true, data };

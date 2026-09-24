@@ -164,8 +164,16 @@ export default function AbsensiPage() {
   }, [activePelatihId, activeTab, bulan, tahun, selectedSesi, todayDate]);
 
   useEffect(() => {
-    loadSiswa();
-    setPenggantiPelatihId('');
+    let ignore = false;
+    void Promise.resolve().then(async () => {
+      if (!ignore) {
+        await loadSiswa();
+        setPenggantiPelatihId('');
+      }
+    });
+    return () => {
+      ignore = true;
+    };
   }, [loadSiswa]);
 
   // -------------------------------------------------------

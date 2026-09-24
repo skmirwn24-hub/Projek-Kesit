@@ -103,10 +103,22 @@ export async function absenSiswa(
 // --------------------------------------------------------
 export async function batalkanAbsen(
   absensiId: string,
-  userRole: KesitRole
+  userRole: KesitRole,
+  pelatihId?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   if (!hasPermission(userRole, 'absensi:write')) {
     return { success: false, error: 'Akses ditolak: tidak memiliki izin absensi.' };
+  }
+
+  // Pelatih hanya boleh membatalkan absensi untuk siswa miliknya
+  if (userRole === 'Pelatih') {
+    if (!pelatihId) {
+      return { success: false, error: 'Akses ditolak: profil pelatih tidak valid.' };
+    }
+    const isOwned = await absensiRepo.isAbsensiOwnedByPelatih(absensiId, pelatihId);
+    if (!isOwned) {
+      return { success: false, error: 'Akses ditolak: absensi ini bukan milik siswa Anda.' };
+    }
   }
 
   try {

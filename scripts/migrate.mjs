@@ -26,7 +26,17 @@ if (fs.existsSync(envLocalPath)) {
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || envConfig.NEXT_PUBLIC_SUPABASE_URL;
-const dbPassword = process.argv[2] || process.env.SUPABASE_DB_PASSWORD || envConfig.SUPABASE_DB_PASSWORD;
+let dbPassword = process.env.SUPABASE_DB_PASSWORD || envConfig.SUPABASE_DB_PASSWORD;
+let filterArg = null;
+
+for (let i = 2; i < process.argv.length; i++) {
+  const arg = process.argv[i].trim();
+  if (arg === '005+006' || arg === '005,006' || arg.startsWith('00') || arg.startsWith('--')) {
+    filterArg = arg;
+  } else if (!dbPassword) {
+    dbPassword = arg;
+  }
+}
 
 if (!supabaseUrl) {
   console.error('❌ Error: NEXT_PUBLIC_SUPABASE_URL wajib disetel di .env.local');
@@ -42,10 +52,13 @@ if (!dbPassword) {
 const projectRef = supabaseUrl.replace('https://', '').split('.')[0];
 
 console.log('========================================================');
-console.log('KESIT Management - Database Schema Migration (DDL Only)');
+console.log('KESIT Management - Database Schema Migration');
 console.log('========================================================');
 console.log(`Target Supabase URL : ${supabaseUrl}`);
 console.log(`Project Ref         : ${projectRef}`);
+if (filterArg) {
+  console.log(`Filter Mode         : ${filterArg}`);
+}
 
 async function run() {
   const poolerHosts = [
@@ -85,26 +98,63 @@ async function run() {
   }
 
   try {
-    // 1. Jalankan skema dasar (dev_full_setup.sql - DDL murni)
-    const baseSqlFile = path.join(rootDir, 'supabase', 'dev_full_setup.sql');
-    console.log(`\n[1/2] Menjalankan DDL Skema Dasar: ${baseSqlFile}`);
-    const baseSql = fs.readFileSync(baseSqlFile, 'utf8');
-    await pgClient.query(baseSql);
-    console.log('✓ Skema tabel, fungsi, dan RLS policies berhasil diterapkan!');
+    const isOnly005006 = filterArg === '005+006' || filterArg === '005,006';
+    const isOnly007 = filterArg === '007' || filterArg === '007_security' || filterArg === '007_security_hardening';
 
-    // 2. Jalankan migrasi optimasi performa (002_optimize_performance.sql)
-    const optSqlFile = path.join(rootDir, 'supabase', 'migrations', '002_optimize_performance.sql');
-    if (fs.existsSync(optSqlFile)) {
-      console.log(`\n[2/2] Menjalankan Migrasi Optimasi: ${optSqlFile}`);
-      const optSql = fs.readFileSync(optSqlFile, 'utf8');
-      await pgClient.query(optSql);
-      console.log('✓ Indeks performa dan fungsi agregasi dashboard berhasil diterapkan!');
+    const steps = [];
+
+    if (isOnly007) {
+      steps.push({
+        name: 'Migrasi 007: Security Hardening (007_security_hardening.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '007_security_hardening.sql'),
+      });
+    } else if (isOnly005006) {
+      steps.push({
+        name: 'Migrasi 005: Full Absensi & Pendaftaran Setup (005_full_absensi_setup.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '005_full_absensi_setup.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 006: Repair Absensi Setup (006_absensi_repair.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '006_absensi_repair.sql'),
+      });
+    } else {
+      steps.push({
+        name: 'DDL Skema Dasar (dev_full_setup.sql)',
+        path: path.join(rootDir, 'supabase', 'dev_full_setup.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 002: Optimasi Performa (002_optimize_performance.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '002_optimize_performance.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 005: Full Absensi & Pendaftaran Setup (005_full_absensi_setup.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '005_full_absensi_setup.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 006: Repair Absensi Setup (006_absensi_repair.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '006_absensi_repair.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 007: Security Hardening (007_security_hardening.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '007_security_hardening.sql'),
+      });
+    }
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (fs.existsSync(step.path)) {
+        console.log(`\n[${i + 1}/${steps.length}] Menjalankan: ${step.name}`);
+        const sql = fs.readFileSync(step.path, 'utf8');
+        await pgClient.query(sql);
+        console.log(`✓ Selesai: ${step.name}`);
+      } else {
+        console.log(`\n⚠️ File tidak ditemukan: ${step.path}`);
+      }
     }
 
     await pgClient.end();
     console.log('\n========================================================');
-    console.log('✓ MIGRASI SELESAI! Struktur database DDL terpasang sempurna.');
-    console.log('  Catatan: Skrip migrasi ini TIDAK memasukkan data dummy.');
+    console.log('✓ MIGRASI SELESAI! Seluruh script SQL berhasil dieksekusi.');
     console.log('========================================================\n');
   } catch (err) {
     console.error('\n❌ Gagal saat eksekusi migrasi SQL:', err.message);

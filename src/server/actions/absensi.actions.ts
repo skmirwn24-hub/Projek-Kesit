@@ -85,7 +85,7 @@ export async function batalkanAbsenAction(
     };
   }
 
-  return absensiService.batalkanAbsen(parsed.data.absensi_id, profile.role);
+  return absensiService.batalkanAbsen(parsed.data.absensi_id, profile.role, profile.pelatih_id);
 }
 
 // --------------------------------------------------------

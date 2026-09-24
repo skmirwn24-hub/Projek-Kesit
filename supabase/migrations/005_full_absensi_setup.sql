@@ -20,7 +20,13 @@ CREATE TABLE IF NOT EXISTS public.absensi_siswa (
 
 -- Unique indexes
 CREATE UNIQUE INDEX IF NOT EXISTS uq_absensi_reguler_private
-  ON public.absensi_siswa (siswa_id, (date_trunc('month', tanggal)::DATE), nomor_sesi, kategori)
+  ON public.absensi_siswa (
+    siswa_id,
+    EXTRACT(YEAR FROM tanggal),
+    EXTRACT(MONTH FROM tanggal),
+    nomor_sesi,
+    kategori
+  )
   WHERE nomor_sesi IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_absensi_prestasi

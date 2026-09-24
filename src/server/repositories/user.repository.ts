@@ -1,4 +1,5 @@
 import { createClient } from '@/server/supabase/server';
+import { createAdminClient } from '@/server/supabase/admin';
 import { UserProfile } from '@/types/auth';
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
@@ -18,7 +19,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 }
 
 export async function findEmailByUsername(username: string): Promise<string | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc('kesit_email_dari_username', {
     p_username: username,
   });
