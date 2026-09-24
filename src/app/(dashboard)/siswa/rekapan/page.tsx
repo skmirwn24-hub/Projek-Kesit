@@ -59,7 +59,7 @@ export default function RekapanSiswaPage() {
   const [pindahPelatihPemilik, setPindahPelatihPemilik] = useState('');
   const [pindahPelatihDiminta, setPindahPelatihDiminta] = useState('');
   const [pindahBiayaRequest, setPindahBiayaRequest] = useState(0);
-  const [pindahDiskon, setPindahDiskon] = useState(0);
+  const [pindahDiskon, setPindahDiskon] = useState<number | ''>('');
   const [pindahAlasan, setPindahAlasan] = useState('');
   const [submittingPindah, setSubmittingPindah] = useState(false);
 
@@ -208,7 +208,7 @@ export default function RekapanSiswaPage() {
     setPindahPelatihPemilik(item.pelatih_pemilik_id || '');
     setPindahPelatihDiminta('');
     setPindahBiayaRequest(0);
-    setPindahDiskon(0);
+    setPindahDiskon('');
     setPindahAlasan('');
   };
 
@@ -261,7 +261,8 @@ export default function RekapanSiswaPage() {
     setPindahBiayaRequest(val ? 25000 : 0);
   };
 
-  const pindahTotalTagihan = Math.max(0, pindahHargaPaket + pindahBiayaRequest - pindahDiskon);
+  const pindahDiskonNum = typeof pindahDiskon === 'number' ? pindahDiskon : 0;
+  const pindahTotalTagihan = Math.max(0, pindahHargaPaket + pindahBiayaRequest - pindahDiskonNum);
 
   const handleSavePindah = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,7 +285,7 @@ export default function RekapanSiswaPage() {
         pelatih_pemilik_baru: pindahPelatihPemilik || null,
         pelatih_diminta_baru: pindahPelatihDiminta || null,
         biaya_request_pelatih_baru: pindahBiayaRequest,
-        diskon_baru: pindahDiskon,
+        diskon_baru: pindahDiskonNum,
         total_tagihan_baru: pindahTotalTagihan,
         alasan: pindahAlasan || 'Perubahan / kenaikan paket oleh Admin',
         diubah_oleh: displayName,
@@ -1211,8 +1212,12 @@ export default function RekapanSiswaPage() {
                       type="number"
                       id="pindahDiskonBaru"
                       min="0"
+                      placeholder="0"
                       value={pindahDiskon}
-                      onChange={(e) => setPindahDiskon(Number(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPindahDiskon(val === '' ? '' : Math.max(0, Number(val)));
+                      }}
                     />
                   </label>
 
