@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { loginAction } from '@/server/actions/auth.actions';
 
 export default function LoginPage() {
@@ -102,9 +102,18 @@ export default function LoginPage() {
         </form>
 
         {pesan.text && (
-          <p id="pesanLogin" className={pesan.type}>
-            {pesan.text}
-          </p>
+          <div
+            id="pesanLogin"
+            className={`login-alert ${pesan.type === 'success' ? 'sukses' : 'gagal'}`}
+            role="alert"
+          >
+            {pesan.type === 'success' ? (
+              <CheckCircle2 size={18} className="login-alert-icon" />
+            ) : (
+              <AlertCircle size={18} className="login-alert-icon" />
+            )}
+            <span>{pesan.text}</span>
+          </div>
         )}
 
         <div className="login-footer">KESIT Management</div>
