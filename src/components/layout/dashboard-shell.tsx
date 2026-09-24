@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 
 interface DashboardShellContextValue {
   isMobileOpen: boolean;
@@ -50,9 +49,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Main Content */}
         <main className="main">{children}</main>
-
-        {/* Mobile Bottom Navigation Bar (Hidden on Desktop) */}
-        <MobileBottomNav />
       </div>
     </DashboardShellContext.Provider>
   );

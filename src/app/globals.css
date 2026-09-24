@@ -2035,18 +2035,11 @@ tr:hover td {
   }
 }
 
-/* ==========================================================================
-   MOBILE BOTTOM NAVIGATION BAR
-   ========================================================================== */
-.mobile-bottom-nav {
-  display: none;
-}
-
 /* Small Smartphone Breakpoint (<= 768px) */
 @media (max-width: 768px) {
   /* Main Container Clearance for Mobile */
   .main, .main-content {
-    padding: 12px 12px calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 14px 14px 28px !important;
   }
 
   /* Compact 1-Row Mobile App Header */
@@ -2109,57 +2102,6 @@ tr:hover td {
     width: 32px;
     height: 32px;
     font-size: 13px;
-  }
-
-  /* Fixed Mobile Bottom Nav */
-  .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(58px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: rgba(17, 24, 39, 0.94);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    z-index: 150;
-    align-items: center;
-    justify-content: space-around;
-  }
-
-  .bottom-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    flex: 1;
-    height: 100%;
-    color: var(--text-muted);
-    font-size: 10.5px;
-    font-weight: 600;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    transition: color 0.15s ease, transform 0.1s ease;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .bottom-nav-item:active {
-    transform: scale(0.92);
-  }
-
-  .bottom-nav-item.active {
-    color: #60a5fa;
-  }
-
-  .bottom-nav-item.active svg {
-    color: #60a5fa;
-    filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.5));
   }
 
   /* Stats Grid: 2-Column Compact Layout */
