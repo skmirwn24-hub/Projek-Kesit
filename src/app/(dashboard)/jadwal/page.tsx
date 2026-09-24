@@ -15,8 +15,16 @@ import { useToast } from '@/components/ui/toast';
 import { SkeletonCard, SkeletonTable } from '@/components/ui/skeleton';
 
 const HARI_LIST: HariJadwal[] = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-const TEMPAT_LIST = ['Pandantoyo, Danau Biru Albanawi', 'Baron, Cafe Fameliza', 'Baron, Taman Ono Kabe'];
-const KELAS_LIST = ['Reguler', 'Private', 'Prestasi'];
+const TEMPAT_LIST = [
+  'Pandantoyo, Danau Biru Albanawi',
+  'Baron, Cafe Fameliza',
+  'Baron, Taman Ono Kabe',
+] as const;
+type TempatOption = (typeof TEMPAT_LIST)[number];
+
+const KELAS_LIST = ['Reguler', 'Private', 'Prestasi'] as const;
+type KelasOption = (typeof KELAS_LIST)[number];
+
 const JAM_LIST = Array.from({ length: 10 }, (_, i) => {
   const jam = i + 7;
   return `${jam < 10 ? '0' : ''}${jam}:00`;
@@ -41,8 +49,8 @@ export default function JadwalPage() {
   const [pelatihId, setPelatihId] = useState('');
   const [hari, setHari] = useState<HariJadwal>('Senin');
   const [jamMulai, setJamMulai] = useState('07:00');
-  const [tempat, setTempat] = useState(TEMPAT_LIST[0]);
-  const [kelas, setKelas] = useState(KELAS_LIST[0]);
+  const [tempat, setTempat] = useState<TempatOption>(TEMPAT_LIST[0]);
+  const [kelas, setKelas] = useState<KelasOption>(KELAS_LIST[0]);
   const [submitting, setSubmitting] = useState(false);
 
   const isAdminOrOwner = role === 'Owner' || role === 'Admin';
@@ -83,8 +91,8 @@ export default function JadwalPage() {
     setPelatihId(item.pelatih_id);
     setHari(item.hari);
     setJamMulai(item.jam_mulai);
-    setTempat(item.tempat);
-    setKelas(item.kelas);
+    setTempat(item.tempat as TempatOption);
+    setKelas(item.kelas as KelasOption);
     setFormModalOpen(true);
   };
 
@@ -384,7 +392,7 @@ export default function JadwalPage() {
                       id="inputKelas"
                       required
                       value={kelas}
-                      onChange={(e) => setKelas(e.target.value)}
+                      onChange={(e) => setKelas(e.target.value as KelasOption)}
                     >
                       {KELAS_LIST.map((k) => (
                         <option key={k} value={k}>{k}</option>
@@ -398,7 +406,7 @@ export default function JadwalPage() {
                       id="inputTempat"
                       required
                       value={tempat}
-                      onChange={(e) => setTempat(e.target.value)}
+                      onChange={(e) => setTempat(e.target.value as TempatOption)}
                     >
                       {TEMPAT_LIST.map((t) => (
                         <option key={t} value={t}>{t}</option>
