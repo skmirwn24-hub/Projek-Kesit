@@ -1,4 +1,4 @@
-import { createClient } from '@/server/utils/supabase/server';
+import { createClient } from '@/server/supabase/server';
 import { JadwalPelatih, JadwalPelatihView } from '@/types/database';
 import { JadwalPelatihInput } from '@/server/validators/jadwal.schema';
 

@@ -1,19 +1,18 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { KesitRole } from '@/types/auth';
-import { getSession } from '@/server/utils/supabase/server';
+import { getCurrentUser } from '@/server/services/auth.service';
 import { JadwalPelatihInput, jadwalPelatihSchema } from '@/server/validators/jadwal.schema';
 import * as jadwalService from '@/server/services/jadwal.service';
 import { z } from 'zod';
 
 export async function createJadwalAction(input: JadwalPelatihInput) {
   try {
-    const session = await getSession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const { profile } = await getCurrentUser();
+    if (!profile) return { success: false, error: 'Unauthorized' };
 
-    const role = (session.user.user_metadata?.role as KesitRole) || 'Pelatih';
-    const currentPelatihId = session.user.user_metadata?.pelatih_id;
+    const role = profile.role;
+    const currentPelatihId = profile.pelatih_id || undefined;
     
     // validate input
     const validated = jadwalPelatihSchema.parse(input);
@@ -25,7 +24,7 @@ export async function createJadwalAction(input: JadwalPelatihInput) {
     return result;
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message };
+      return { success: false, error: error.issues[0]?.message || 'Input tidak valid' };
     }
     const message = error instanceof Error ? error.message : 'Terjadi kesalahan sistem.';
     return { success: false, error: message };
@@ -34,11 +33,11 @@ export async function createJadwalAction(input: JadwalPelatihInput) {
 
 export async function updateJadwalAction(id: string, input: Partial<JadwalPelatihInput>, ownerPelatihId: string) {
   try {
-    const session = await getSession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const { profile } = await getCurrentUser();
+    if (!profile) return { success: false, error: 'Unauthorized' };
 
-    const role = (session.user.user_metadata?.role as KesitRole) || 'Pelatih';
-    const currentPelatihId = session.user.user_metadata?.pelatih_id;
+    const role = profile.role;
+    const currentPelatihId = profile.pelatih_id || undefined;
     
     const result = await jadwalService.editJadwal(id, input, role, ownerPelatihId, currentPelatihId);
     if (result.success) {
@@ -53,11 +52,11 @@ export async function updateJadwalAction(id: string, input: Partial<JadwalPelati
 
 export async function deleteJadwalAction(id: string, ownerPelatihId: string) {
   try {
-    const session = await getSession();
-    if (!session) return { success: false, error: 'Unauthorized' };
+    const { profile } = await getCurrentUser();
+    if (!profile) return { success: false, error: 'Unauthorized' };
 
-    const role = (session.user.user_metadata?.role as KesitRole) || 'Pelatih';
-    const currentPelatihId = session.user.user_metadata?.pelatih_id;
+    const role = profile.role;
+    const currentPelatihId = profile.pelatih_id || undefined;
     
     const result = await jadwalService.removeJadwal(id, role, ownerPelatihId, currentPelatihId);
     if (result.success) {
