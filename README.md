@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](#)
 
 <p align="center">
-  Aplikasi tata kelola operasional terpadu yang dirancang khusus untuk klub renang <b>KESIT</b>. Mencakup manajemen pendaftaran bertahap (wizard), kuitansi PDF instan, integrasi WhatsApp, absensi multi-sesi dengan pemotongan kuota otomatis, jadwal mengajar pelatih, penilaian kinerja berbasis KPI, serta pencatatan keuangan real-time.
+  Aplikasi operasional terpadu untuk klub renang <b>KESIT</b> berbasis Next.js 16 App Router dan Supabase PostgreSQL. Dokumentasi ini memuat <b>alur bisnis riil</b> yang telah berjalan penuh di dalam basis kode, disertai diagram alir (flowchart) akurat tanpa rekayasa fitur.
 </p>
 
 </div>
@@ -20,367 +20,404 @@
 
 ## 📑 Daftar Isi
 
-- [1. Gambaran Umum Sistem](#1-gambaran-umum-sistem)
-- [2. Fitur-Fitur Unggulan](#2-fitur-fitur-unggulan)
-- [3. Matriks Peran & Hak Akses (RBAC)](#3-matriks-peran--hak-akses-rbac)
-- [4. Flowchart Alur Bisnis Sistem (Mermaid Diagrams)](#4-flowchart-alur-bisnis-sistem)
-  - [4.1 Flowchart Menyeluruh (End-to-End Life Cycle)](#41-flowchart-menyeluruh-end-to-end-life-cycle)
-  - [4.2 Flowchart Per-Fitur](#42-flowchart-per-fitur)
-    - [A. Autentikasi & Otorisasi RBAC](#a-autentikasi--otorisasi-rbac)
+- [1. Gambaran Umum & Status Fitur](#1-gambaran-umum--status-fitur)
+  - [1.1 Fitur Aktif & Berjalan Penuh](#11-fitur-aktif--berjalan-penuh)
+  - [1.2 Fitur Dalam Tahap Pengembangan (Coming Soon)](#12-fitur-dalam-tahap-pengembangan-coming-soon)
+- [2. Matriks Peran & Hak Akses (RBAC)](#2-matriks-peran--hak-akses-rbac)
+- [3. Flowchart Alur Bisnis Riil Sistem (Mermaid Diagrams)](#3-flowchart-alur-bisnis-riil-sistem)
+  - [3.1 Flowchart Menyeluruh (End-to-End System Life Cycle)](#31-flowchart-menyeluruh-end-to-end-system-life-cycle)
+  - [3.2 Flowchart Per-Fitur Riil](#32-flowchart-per-fitur-riil)
+    - [A. Autentikasi, Sesi & Otorisasi RBAC](#a-autentikasi-sesi--otorisasi-rbac)
     - [B. Pendaftaran Siswa Baru (4-Step Wizard)](#b-pendaftaran-siswa-baru-4-step-wizard)
-    - [C. Rekapan Siswa & Siklus Paket](#c-rekapan-siswa--siklus-paket)
-    - [D. Absensi Multi-Sesi & Pemotongan Kuota Otomatis](#d-absensi-multi-sesi--pemotongan-kuota-otomatis)
+    - [C. Rekapan Siswa & Pindah Kelas / Paket](#c-rekapan-siswa--pindah-kelas--paket)
+    - [D. Presensi Multi-Sesi & Pemotongan Kuota Otomatis](#d-presensi-multi-sesi--pemotongan-kuota-otomatis)
     - [E. Manajemen Jadwal Latihan Pelatih](#e-manajemen-jadwal-latihan-pelatih)
-    - [F. Penilaian Kinerja Pelatih & Sanksi](#f-penilaian-kinerja-pelatih--sanksi)
-    - [G. Keuangan & Pelunasan SPP](#g-keuangan--pelunasan-spp)
-- [5. Arsitektur & Teknologi](#5-arsitektur--teknologi)
-- [6. Struktur Direktori Proyek](#6-struktur-direktori-proyek)
-- [7. Panduan Instalasi & Menjalankan Lokal](#7-panduan-instalasi--menjalankan-lokal)
-- [8. Skrip Database & Migrasi](#8-skrip-database--migrasi)
-- [9. Standar Kode & Git Workflow](#9-standar-kode--git-workflow)
+    - [F. Manajemen Data Pelatih & Masa Training](#f-manajemen-data-pelatih--masa-training)
+    - [G. Penilaian Kinerja Pelatih & Sanksi](#g-penilaian-kinerja-pelatih--sanksi)
+    - [H. Log Riwayat & Audit Perubahan Siswa](#h-log-riwayat--audit-perubahan-siswa)
+- [4. Arsitektur & Teknologi](#4-arsitektur--teknologi)
+- [5. Struktur Direktori Proyek](#5-struktur-direktori-proyek)
+- [6. Panduan Instalasi & Menjalankan Lokal](#6-panduan-instalasi--menjalankan-lokal)
+- [7. Skrip Database & Migrasi](#7-skrip-database--migrasi)
+- [8. Standar Kode & Git Workflow](#8-standar-kode--git-workflow)
 
 ---
 
-## 1. Gambaran Umum Sistem
+## 1. Gambaran Umum & Status Fitur
 
-**KESIT Management System** memadukan kemudahan penggunaan mobile-first dan kestabilan arsitektur Next.js 16 App Router dengan database cloud Supabase (PostgreSQL 15+). 
+Sistem ini dibangun untuk memfasilitasi kebutuhan operasional nyata di sekolah renang **KESIT**. Agar dokumentasi ini akurat dan dapat dipercaya, berikut adalah pemetaan status fitur yang **benar-benar ada di dalam kode saat ini**:
 
-Sistem ini memecahkan berbagai tantangan operasional harian sekolah renang, antara lain:
-- **Pendaftaran Siswa yang Panjang & Rawan Salah:** Dipecah menjadi 4 langkah ringkas (*Biodata Siswa*, *Data Wali*, *Lokasi & Paket*, *Pembayaran SPP Awal*).
-- **Pengurangan Kuota yang Rawan Selisih:** Tiap kali siswa diabsen *Hadir*, kuota pertemuan otomatis dipotong 1 oleh sistem database PostgreSQL. Jika terjadi kesalahan, sistem menyediakan fitur *Batal Absensi* yang memulihkan kuota secara aman.
-- **Kuitansi & Komunikasi Wali:** Begitu pendaftaran atau pelunasan berhasil, dokumen PDF kuitansi resmi langsung terbit dan dapat dikirim ke nomor WhatsApp wali murid hanya dengan satu sentuhan.
-- **Disiplin & Penilaian Pelatih:** Evaluasi bulanan terstruktur berbasis 5 pilar KPI dengan sistem sanksi denda dan pengurangan honor otomatis.
+### 1.1 Fitur Aktif & Berjalan Penuh
+
+| Halaman / Modul | Rute URL | Status | Deskripsi Riil yang Sudah Ada |
+| :--- | :--- | :---: | :--- |
+| **Login & Autentikasi** | `/login` | ✅ Aktif | Login identifier (email/username), verifikasi password Supabase, proteksi status akun aktif, cookie sesi SSR. |
+| **Dashboard Utama** | `/` | ✅ Aktif | Metrik ringkasan siswa, pelatih aktif, cabang lokasi, tabel operasional hari ini, dan rekap tagihan/piutang SPP. |
+| **Pendaftaran Siswa** | `/siswa/pendaftaran` | ✅ Aktif | Wizard 4 langkah (*Biodata*, *Wali*, *Paket*, *Pembayaran SPP Awal*), live preview tagihan, unduh Kuitansi PDF resmi (`jsPDF`), share WhatsApp wali. |
+| **Rekapan Siswa** | `/siswa/rekapan` | ✅ Aktif | Tabel siswa, pencarian & filter kelas, modal detail kuota/histori, dan modal mutasi/pindah kelas & paket. |
+| **Presensi Multi-Sesi** | `/absensi` | ✅ Aktif | Presensi per tanggal, kategori (Reguler/Private/Prestasi) & sesi (Sesi 1/2). Hadir = kuota otomatis `-1`, Izin = simpan catatan, fitur Batal Presensi pulihkan kuota `+1`. |
+| **Jadwal Pelatih** | `/jadwal` | ✅ Aktif | Filter hari & pelatih, kelola slot jam & kolam, pembatasan hak akses (pelatih hanya jadwal sendiri vs admin/owner kelola semua). |
+| **Data Pelatih** | `/pelatih` | ✅ Aktif | Statistik pelatih, tambah/edit pelatih, status (*Aktif*, *Training*, *Nonaktif*), otomatisasi masa training 3 bulan, pelacakan jumlah siswa milik. |
+| **Penilaian Pelatih** | `/penilaian` | ✅ Aktif | Evaluasi 5 pilar KPI skor 1-5, standar KKM 4.00, pencatatan pelanggaran, putusan sanksi (*Teguran*, *SP-1*, *SP-2*, *SP-3*, *Putus Mitra*), riwayat evaluasi. |
+| **Riwayat / Audit Log** | `/riwayat` | ✅ Aktif | Log audit riwayat mutasi siswa, pendaftaran, filter jenis perubahan, bulan, tahun, dan paginasi data. |
+
+### 1.2 Fitur Dalam Tahap Pengembangan (Coming Soon)
+
+Halaman-halaman berikut saat ini berstatus placeholder/halaman persiapan (`<ComingSoon />`) dan **belum memiliki logika bisnis aktif**:
+
+| Modul Persiapan | Rute URL | Status | Rencana Fungsionalitas Mendatang |
+| :--- | :--- | :---: | :--- |
+| **Keuangan, Kas & Penggajian** | `/keuangan` | ⏳ *Coming Soon* | Buku kas operasional klub, pencatatan kas masuk/keluar, dan sistem penggajian pelatih per sesi. |
+| **Katalog Paket & Pembayaran** | `/paket-pembayaran`| ⏳ *Coming Soon* | Katalog tarif paket, perpanjangan kuota mandiri, dan modul pelunasan tagihan bertahap. |
+| **Rapor & Laporan Siswa** | `/laporan-siswa` | ⏳ *Coming Soon* | Rapor perkembangan gaya renang (dada, bebas, punggung, kupu-kupu) dan sertifikasi kenaikan tingkat. |
+| **Pengaturan Sistem** | `/pengaturan` | ⏳ *Coming Soon* | Konfigurasi akun staf internal, manajemen cabang kolam, dan pencadangan data sistem. |
 
 ---
 
-## 2. Fitur-Fitur Unggulan
+## 2. Matriks Peran & Hak Akses (RBAC)
 
-| Fitur | Deskripsi Singkat |
-| :--- | :--- |
-| **Multi-Step Registration Wizard** | Formulir 4 langkah dengan validasi cerdas, live preview paket latihan, dan kalkulasi diskon yang bebas bug. |
-| **Digital Receipt & WhatsApp Share** | Penerbitan kuitansi resmi digital format PDF (`jsPDF`) dan integrasi langsung API WhatsApp (`wa.me`) untuk bukti bayar ke wali. |
-| **Smart Multi-Session Attendance** | Presensi siswa berdasarkan kategori (*Reguler*, *Private*, *Prestasi*) dan sesi latihan (Sesi 1 & Sesi 2) yang memotong kuota paket otomatis. |
-| **Attendance Caching Engine** | Query absensi berkecepatan tinggi dengan caching berbasis SWR dan optimasi indeks PostgreSQL untuk akses mobile yang mulus. |
-| **Trainer Schedule Grid** | Tata kelola jadwal latihan per hari, jam mulai, dan tempat kolam renang dengan aturan hak akses ketat (pelatih hanya kelola jadwal sendiri). |
-| **Trainer Performance & Penalty KPI** | Rapor performa pelatih bulanan (skor 1-5) dengan pencatatan pelanggaran, denda nominal, dan sanksi sesi tanpa honor. |
-| **Student Lifecycle & Class Mutation** | Pelacakan status siswa (*Aktif*, *Cuti*, *Nonaktif*) serta modul mutasi/pindah kelas & kenaikan paket. |
-| **Financial Ledger** | Rekapitulasi pembayaran lunas/tertunggak, pencatatan kas masuk dari SPP, dan pengeluaran operasional klub. |
+Aturan hak akses yang diimplementasikan pada Server Actions (`src/server/actions/`) dan Server Services (`src/server/services/`):
 
----
-
-## 3. Matriks Peran & Hak Akses (RBAC)
-
-Aksesibilitas data diproteksi pada level Next.js Server Actions, Route Handlers, dan Row Level Security (RLS) PostgreSQL:
-
-| Modul & Hak Akses | Owner (Superadmin) | Admin | Pelatih |
+| Aksi / Modul | Owner (Superadmin) | Admin | Pelatih |
 | :--- | :---: | :---: | :---: |
-| **Dashboard Utama** | Penuh | Penuh | Ringkasan Pribadi |
+| **Login & Dashboard** | ✅ Penuh | ✅ Penuh | ✅ Ringkasan Pribadi |
 | **Pendaftaran Siswa Baru** | ✅ | ✅ | ❌ |
-| **Rekapan Siswa & Pindah Kelas** | ✅ (Semua) | ✅ (Semua) | 👁️ (Hanya Siswa Bimbingan) |
-| **Absensi Siswa (Hadir/Batal)** | ✅ | ✅ | ✅ (Siswa Bimbingan/Sesi) |
-| **Jadwal Latihan** | ✅ (Semua Pelatih) | ✅ (Semua Pelatih) | ✅ (Jadwal Sendiri) |
-| **Penilaian & Sanksi Pelatih** | ✅ (Input & Putusan) | ✅ (Input) | 👁️ (Lihat Rapor Sendiri) |
-| **Pembayaran SPP & Kuitansi** | ✅ | ✅ | ❌ |
-| **Laporan Kas Keuangan** | ✅ | ✅ | ❌ |
-| **Manajemen Akun & Sistem** | ✅ | ❌ | ❌ |
+| **Lihat Rekapan Siswa** | ✅ (Semua) | ✅ (Semua) | 👁️ (Hanya Siswa Milik Sendiri) |
+| **Pindah Kelas / Paket Siswa** | ✅ | ✅ | ❌ |
+| **Presensi Siswa (Hadir / Izin / Batal)** | ✅ | ✅ | ✅ (Siswa Bimbingan / Sesi Terkait) |
+| **Kelola Jadwal Latihan** | ✅ (Semua) | ✅ (Semua) | ✅ (Hanya Jadwal Sendiri) |
+| **Kelola Data & Status Pelatih** | ✅ | ✅ | ❌ |
+| **Input Penilaian & Sanksi Pelatih** | ✅ (Penilai & Putusan) | ✅ (Petugas Input) | ❌ |
+| **Lihat Riwayat Penilaian Pelatih** | ✅ | ✅ | 👁️ (Rapor Sendiri) |
+| **Lihat Riwayat Perubahan Siswa** | ✅ | ✅ | ❌ |
 
 ---
 
-## 4. Flowchart Alur Bisnis Sistem
+## 3. Flowchart Alur Bisnis Riil Sistem
 
-### 4.1 Flowchart Menyeluruh (End-to-End Life Cycle)
+### 3.1 Flowchart Menyeluruh (End-to-End System Life Cycle)
 
-Diagram ini mengilustrasikan siklus hidup data dari penerimaan siswa baru hingga evaluasi pelatih dan pembukuan kas klub:
+Diagram alir komprehensif yang menghubungkan seluruh modul yang **sudah aktif dan terintegrasi** saat ini:
 
 ```mermaid
 flowchart TD
-    subgraph INTAKE["1. Penerimaan & Pendaftaran"]
-        A1[Calon Siswa / Wali Murid] --> A2[Formulir Pendaftaran 4-Step Wizard]
-        A2 --> A3[Pilih Lokasi, Kelas & Paket Awal]
-        A3 --> A4[Pembayaran SPP Awal]
-        A4 --> A5[Cetak Kuitansi PDF & Kirim via WhatsApp]
+    subgraph S1["1. Sesi & Autentikasi (/login)"]
+        A1[Pengguna Input Email/Username & Password] --> A2{Verifikasi Supabase Auth & Status Akun}
+        A2 -->|Valid & Aktif| A3[Set Cookie Sesi & Masuk ke Dashboard]
+        A2 -->|Tidak Valid / Nonaktif| A4[Tampilkan Notifikasi Error]
     end
 
-    subgraph ALLOCATION["2. Alokasi & Penjadwalan"]
-        A5 --> B1[(Database: Siswa, Paket, Pembayaran)]
-        B1 --> B2[Penetapan Pelatih Pemilik & Diminta]
-        B2 --> B3[Penyusunan Jadwal Latihan Kolam]
-        B3 --> B4[Jadwal Terbit di Dashboard]
+    subgraph S2["2. Pendaftaran Siswa Baru (/siswa/pendaftaran)"]
+        A3 --> B1[Admin/Owner Buka Form Pendaftaran Wizard]
+        B1 --> B2[Langkah 1: Input Biodata Siswa]
+        B2 --> B3[Langkah 2: Input Data & Kontak WhatsApp Wali]
+        B3 --> B4[Langkah 3: Pilih Lokasi, Kelas, Pelatih & Paket + Input Diskon]
+        B4 --> B5[Langkah 4: Konfirmasi Tagihan & Input Nominal Dibayar]
+        B5 --> B6[(Simpan ke Database Siswa & Pembayaran Awal)]
+        B6 --> B7[Generate Otomatis Kuitansi Resmi PDF jsPDF]
+        B7 --> B8[Bagikan Rincian Kuitansi via WhatsApp Wali Murid]
     end
 
-    subgraph EXECUTION["3. Pelaksanaan Sesi & Absensi"]
-        B4 --> C1[Sesi Latihan di Kolam Renang]
-        C1 --> C2[Input Absensi Multi-Sesi: Sesi 1 / 2]
-        C2 --> C3{Status Kehadiran Siswa}
-        C3 -->|Hadir| C4[Kuota Siswa Otomatis Berkurang -1]
-        C3 -->|Izin / Sakit| C5[Kuota Tetap & Catatan Tersimpan]
-        C4 --> C6[Kehadiran Pelatih Mengajar Tercatat]
+    subgraph S3["3. Penjadwalan & Pelatih (/pelatih & /jadwal)"]
+        A3 --> C1[Kelola Data Pelatih di /pelatih]
+        C1 --> C2[Input Pelatih, Status Aktif/Training & Hitung 3 Bulan Masa Training]
+        A3 --> C3[Kelola Jadwal di /jadwal]
+        C3 --> C4[Atur Slot: Pelatih, Hari, Jam Mulai, Kolam & Kelas]
+        C4 --> C5{Hak Akses Role}
+        C5 -->|Pelatih| C6[Hanya Boleh Kelola Jadwal Sendiri]
+        C5 -->|Admin / Owner| C7[Bebas Kelola Seluruh Jadwal Pelatih]
     end
 
-    subgraph EVALUATION["4. Kinerja Pelatih & Sanksi"]
-        C6 --> D1[Monitoring Kehadiran Bulanan]
-        D1 --> D2[Evaluasi KPI 5 Pilar: Skor 1-5]
-        D2 --> D3{Terdapat Pelanggaran?}
-        D3 -->|Ya| D4[Sanksi: Peringatan, Denda Rp, Sesi Tanpa Honor]
-        D3 -->|Tidak| D5[Honor Pelatih Penuh + Reward]
+    subgraph S4["4. Pelaksanaan Sesi & Presensi (/absensi)"]
+        C4 --> D1[Sesi Latihan Berlangsung di Kolam]
+        D1 --> D2[Buka Halaman Presensi di /absensi]
+        D2 --> D3[Pilih Tanggal, Kategori Kelas & Sesi: Sesi 1 atau Sesi 2]
+        D3 --> D4{Aksi Presensi Siswa}
+        D4 -->|Klik Hadir| D5[Status Hadir: Kuota Siswa Otomatis Berkurang -1]
+        D4 -->|Klik Tidak Hadir / Izin| D6[Status Izin: Simpan Catatan, Kuota Siswa Tetap]
+        D4 -->|Klik Batal Absen| D7[Status Batal: Kuota Siswa Kembali Dipulihkan +1]
+        D5 --> D8[Catat Otomatis Pelatih yang Bertugas di Sesi Ini]
     end
 
-    subgraph CYCLE_AND_FINANCE["5. Siklus Paket & Pembukuan Kas"]
-        C4 --> E1{Kuota Pertemuan Habis?}
-        E1 -->|Habis| E2[Notifikasi Perpanjangan Paket / Mutasi Kelas]
-        E1 -->|Masih Ada| E3[Lanjut Sesi Pertemuan Berikutnya]
-        E2 --> A4
-        
-        A4 --> F1[Pencatatan Pemasukan SPP & Pendaftaran]
-        D4 --> F2[Pemotongan Honor dari Denda Pelanggaran]
-        D5 --> F3[Kalkulasi Pengeluaran Honor Bersih]
-        F1 --> F4[Laporan Keuangan & Kas Real-Time]
-        F2 --> F4
-        F3 --> F4
+    subgraph S5["5. Rekapan Siswa & Pindah Kelas (/siswa/rekapan)"]
+        D5 --> E1[Monitoring Data di /siswa/rekapan]
+        E1 --> E2{Perlu Mutasi / Pindah Kelas?}
+        E2 -->|Ya| E3[Buka Modal Pindah Kelas]
+        E3 --> E4[Pilih Lokasi Baru, Paket Baru, Diskon Baru & Alasan]
+        E4 --> E5[(Simpan Perubahan & Catat ke Log Audit /riwayat)]
+    end
+
+    subgraph S6["6. Penilaian Kinerja & Sanksi Pelatih (/penilaian)"]
+        D8 --> F1[Evaluasi Berkala di /penilaian]
+        F1 --> F2[Input Skor 5 Pilar KPI 1-5: KKM 4.00]
+        F2 --> F3{Ada Pelanggaran Indisipliner?}
+        F3 -->|Ya| F4[Pilih Pelanggaran & Putusan Sanksi: Teguran / SP-1 / SP-2 / SP-3 / Putus Mitra]
+        F3 -->|Tidak| F5[Status Aman & Memenuhi KKM]
+        F4 --> F6[Kalkulasi Durasi Sanksi, % Denda & Sesi Tanpa Honor]
+        F6 --> F7[(Tersimpan Permanen di Riwayat Penilaian Pelatih)]
     end
 ```
 
 ---
 
-### 4.2 Flowchart Per-Fitur
+### 3.2 Flowchart Per-Fitur Riil
 
-#### A. Autentikasi & Otorisasi RBAC
+#### A. Autentikasi, Sesi & Otorisasi RBAC
 
-Alur login cerdas yang mengenali username maupun email, verifikasi status akun, penerbitan cookie sesi SSR, dan pengamanan rute dashboard.
+Alur login di [src/app/(auth)/login/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(auth)/login/page.tsx) yang mendukung identifier email atau username, verifikasi status akun aktif dan aktivasi profil:
 
 ```mermaid
 flowchart TD
-    Start([Mulai]) --> InputCreds[Input Identifier: Email/Username & Password]
-    InputCreds --> CheckEmailFormat{Apakah input format email?}
+    Start([Mulai]) --> Input[Input Identifier: Email/Username & Password]
+    Input --> CheckEmail{Format Email?}
     
-    CheckEmailFormat -- Ya --> SupabaseAuth[Supabase Auth: signInWithPassword]
-    CheckEmailFormat -- Tidak --> ResolveUsername[Cari email via user_profiles by username]
+    CheckEmail -- Ya --> SupabaseAuth[Panggil Supabase Auth signInWithPassword]
+    CheckEmail -- Tidak --> ResolveEmail[Cari Email via user_profiles berdasarkan Username]
     
-    ResolveUsername --> FoundEmail{Email ditemukan?}
-    FoundEmail -- Tidak --> ErrNotFound[Gagal: Akun tidak ditemukan]
-    FoundEmail -- Ya --> SupabaseAuth
+    ResolveEmail --> EmailFound{Ditemukan?}
+    EmailFound -- Tidak --> ErrNotFound[Gagal: Username Tidak Terdaftar]
+    EmailFound -- Ya --> SupabaseAuth
     
-    SupabaseAuth --> AuthSuccess{Kredensial Valid?}
-    AuthSuccess -- Tidak --> ErrWrongCreds[Gagal: Password salah]
-    AuthSuccess -- Ya --> FetchProfile[Ambil data user_profiles]
+    SupabaseAuth --> AuthOK{Password Cocok?}
+    AuthOK -- Tidak --> ErrPass[Gagal: Password Salah]
+    AuthOK -- Ya --> GetProfile[Ambil Data user_profiles]
     
-    FetchProfile --> CheckActive{status_akun == 'Aktif'?}
-    CheckActive -- Tidak --> ErrDisabled[Gagal: Akun sedang dinonaktifkan]
-    CheckActive -- Ya --> CheckActivated{aktivasi_selesai == true?}
-    CheckActivated -- Tidak --> ErrUnactivated[Gagal: Aktivasi belum selesai]
-    CheckActivated -- Ya --> SetCookie[Set Cookie: httpOnly: false, sameSite: lax, secure]
+    GetProfile --> CheckActive{status_akun == 'Aktif'?}
+    CheckActive -- Tidak --> ErrInactive[Gagal: Akun Dinonaktifkan]
+    CheckActive -- Ya --> CheckAct{aktivasi_selesai == true?}
+    CheckAct -- Tidak --> ErrUnact[Gagal: Aktivasi Belum Selesai]
+    CheckAct -- Ya --> SetCookie[Set Cookie: httpOnly: false, sameSite: lax, secure]
     
-    SetCookie --> RedirectDashboard[Redirect ke /dashboard]
-    RedirectDashboard --> MiddlewareCheck{Evaluasi Role Pengguna}
-    
-    MiddlewareCheck -->|Owner| AccessFull[Akses Seluruh Modul & Akun]
-    MiddlewareCheck -->|Admin| AccessAdmin[Akses Operasional: Siswa, Kas, Absensi]
-    MiddlewareCheck -->|Pelatih| AccessCoach[Akses Terbatas: Siswa Sendiri, Absensi, Jadwal]
+    SetCookie --> GoDashboard[Redirect ke /dashboard]
+    GoDashboard --> Middleware[Cek Akses Role: Owner / Admin / Pelatih]
 ```
 
 ---
 
 #### B. Pendaftaran Siswa Baru (4-Step Wizard)
 
-Alur pendaftaran multi-langkah yang memisahkan beban input form, dilengkapi validasi per tahap dan penerbitan kuitansi instan.
+Alur formulir pendaftaran bertahap di [src/app/(dashboard)/siswa/pendaftaran/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/siswa/pendaftaran/page.tsx):
 
 ```mermaid
 flowchart TD
-    Start([Mulai Pendaftaran]) --> Step1[Langkah 1: Biodata Siswa]
-    Step1 --> Val1{Nama & Tanggal Daftar Terisi?}
-    Val1 -- Tidak --> Toast1[Peringatan: Lengkapi Biodata] --> Step1
-    Val1 -- Ya --> Step2[Langkah 2: Data Wali]
+    Start([Buka Halaman Pendaftaran]) --> S1[Langkah 1: Biodata Siswa]
+    S1 --> V1{Nama & Tgl Daftar Lengkap?}
+    V1 -- Tidak --> T1[Peringatan: Lengkapi Biodata] --> S1
+    V1 -- Ya --> S2[Langkah 2: Data Wali]
     
-    Step2 --> Val2{Nama Wali & No. WhatsApp Valid?}
-    Val2 -- Tidak --> Toast2[Peringatan: Kontak Wali Wajib Diisi] --> Step2
-    Val2 -- Ya --> Step3[Langkah 3: Lokasi, Kelas & Paket]
+    S2 --> V2{Nama & No. WhatsApp Terisi?}
+    V2 -- Tidak --> T2[Peringatan: Lengkapi Kontak Wali] --> S2
+    V2 -- Ya --> S3[Langkah 3: Lokasi, Kelas & Paket]
     
-    Step3 --> SelectLocation[Pilih Lokasi & Jenis Kelas]
-    SelectLocation --> SelectCoach[Pilih Pelatih Pemilik & Pelatih Diminta]
-    SelectCoach --> SelectPackage[Pilih Paket Latihan & Kuota]
-    SelectPackage --> InputDiscount[Input Diskon: Bebas Bug Angka 0]
-    InputDiscount --> LiveSummary[Preview Ringkasan Paket & Total Tagihan]
-    LiveSummary --> Val3{Lokasi, Kelas & Paket Terpilih?}
-    Val3 -- Tidak --> Toast3[Peringatan: Lengkapi Pilihan Paket] --> Step3
-    Val3 -- Ya --> Step4[Langkah 4: Pembayaran & Konfirmasi]
+    S3 --> SelectOptions[Pilih Lokasi, Kelas, Pelatih & Paket]
+    SelectOptions --> FillDiscount[Input Diskon: State number / empty]
+    FillDiscount --> LiveRecap[Live Preview Ringkasan Paket & Total Tagihan]
+    LiveRecap --> V3{Lokasi, Kelas & Paket Terpilih?}
+    V3 -- Tidak --> T3[Peringatan: Lengkapi Paket] --> S3
+    V3 -- Ya --> S4[Langkah 4: Pembayaran & Konfirmasi]
     
-    Step4 --> CheckRecap[Review Kartu Konfirmasi Siswa & Paket]
-    CheckRecap --> InputPay[Input Nominal Dibayar & Admin Penerima]
-    InputPay --> CalcRemaining[Kalkulasi Sisa Tagihan & Status Lunas/Belum Lunas]
+    S4 --> ReviewCard[Review Ringkasan Siswa, Wali & Paket]
+    ReviewCard --> InputPay[Input Nominal Dibayar & Admin Penerima]
+    InputPay --> CalcBill[Kalkulasi Sisa Tagihan & Status Lunas/Belum Lunas]
     
-    CalcRemaining --> SubmitBtn[Klik: Daftarkan & Buat Kuitansi PDF]
-    SubmitBtn --> ServerAction[Panggil daftarSiswaAction]
-    ServerAction --> SaveDB[(Simpan ke tabel siswa, paket_siswa, pembayaran)]
+    CalcBill --> Submit[Klik: Daftarkan & Buat Kuitansi PDF]
+    Submit --> CallAction[Panggil daftarSiswaAction]
+    CallAction --> SaveData[(Simpan ke Database Siswa & Pembayaran)]
     
-    SaveDB --> GenerateKuitansi[Generate Nomor Kuitansi KST-XXXXXX]
-    GenerateKuitansi --> GenPDF[Generate PDF Kuitansi Resmi via jsPDF]
-    GenPDF --> AutoDownload[Otomatis Unduh File Kuitansi]
-    AutoDownload --> FinishPanel[Tampilan Hasil Pendaftaran Berhasil]
+    SaveData --> NoKuitansi[Generate Nomor KST-XXXXXX]
+    NoKuitansi --> GenPDF[Generate PDF Kuitansi via jsPDF]
+    GenPDF --> DownloadPDF[Otomatis Unduh Kuitansi PDF]
+    DownloadPDF --> PanelSuccess[Tampilkan Hasil Pendaftaran Berhasil]
     
-    FinishPanel --> ShareWA[Tombol: Kirim Kuitansi via WhatsApp Wali]
-    FinishPanel --> NewRegister[Tombol: Daftarkan Siswa Baru Lainnya]
+    PanelSuccess --> OpenWA[Tombol: Buka WhatsApp Wali wa.me]
+    PanelSuccess --> ResetForm[Tombol: Daftarkan Siswa Baru]
 ```
 
 ---
 
-#### C. Rekapan Siswa & Siklus Paket
+#### C. Rekapan Siswa & Pindah Kelas / Paket
 
-Alur monitoring data siswa, status aktif/cuti, serta proses mutasi/pindah kelas & paket.
+Alur pemantauan data siswa dan mutasi kelas di [src/app/(dashboard)/siswa/rekapan/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/siswa/rekapan/page.tsx):
 
 ```mermaid
 flowchart TD
-    Start([Buka Rekapan Siswa]) --> FetchStudents[Ambil Data Siswa via SWR Hook]
-    FetchStudents --> FilterTable[Pencarian Nama / Filter Kelas / Status Bayar]
-    FilterTable --> StudentTable[Tabel Siswa Terdaftar]
+    Start([Buka Rekapan Siswa]) --> Fetch[Query Data Siswa via SWR Hook]
+    Fetch --> Filter[Pencarian Nama / Filter Kelas / Filter Status]
+    Filter --> Table[Tabel Rekapan Siswa]
     
-    StudentTable --> ChooseAction{Pilihan Aksi Siswa}
+    Table --> Action{Pilih Aksi Siswa}
     
-    ChooseAction -->|Detail Siswa| OpenDetailModal[Buka Modal Detail Siswa]
-    OpenDetailModal --> ViewDetails[Lihat Data Personal, Histori Kuota, Absensi & Pembayaran]
+    Action -->|Detail Siswa| DetailModal[Buka Modal Detail Siswa]
+    DetailModal --> ShowInfo[Lihat Data Diri, Wali, Kuota Terpakai/Total & Histori Pindah]
     
-    ChooseAction -->|Pindah Kelas / Paket| OpenMoveModal[Buka Modal Pindah Kelas]
-    OpenMoveModal --> InputMoveData[Pilih Lokasi Baru, Kelas Baru & Pelatih Baru]
-    InputMoveData --> InputMoveDisc[Input Diskon Baru & Hitung Tagihan Baru]
-    InputMoveData --> InputReason[Tulis Alasan Perpindahan]
+    Action -->|Pindah Kelas / Paket| MoveModal[Buka Modal Pindah Kelas]
+    MoveModal --> InputNewData[Pilih Lokasi Baru, Kelas Baru, Paket Baru & Pelatih Baru]
+    InputNewData --> InputNewDiscount[Input Diskon Baru & Hitung Tagihan Baru]
+    InputNewData --> InputReason[Input Alasan Perpindahan]
     InputReason --> SaveMove[Panggil pindahKelasAction]
-    SaveMove --> SaveMoveDB[(Update paket_siswa & Catat ke riwayat)]
-    SaveMoveDB --> MutateStudents[Revalidasi SWR & Perbarui Tampilan Tabel]
+    SaveMove --> SaveMoveDB[(Update paket_siswa & Catat Log ke riwayat)]
+    SaveMoveDB --> Mutate[Revalidasi Cache SWR & Refresh Tabel]
 ```
 
 ---
 
-#### D. Absensi Multi-Sesi & Pemotongan Kuota Otomatis
+#### D. Presensi Multi-Sesi & Pemotongan Kuota Otomatis
 
-Alur absensi harian yang memotong kuota paket siswa saat berstatus hadir, dengan kemampuan pembatalan aman.
+Alur absensi harian di [src/app/(dashboard)/absensi/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/absensi/page.tsx) dengan kuota otomatis dan pembatalan aman:
 
 ```mermaid
 flowchart TD
-    Start([Buka Modul Absensi]) --> ChooseFilter[Pilih Tanggal, Kategori & Nomor Sesi]
-    ChooseFilter --> LoadSiswa[Ambil Data Siswa Sesi Tersebut via SWR Cache]
-    LoadSiswa --> DisplayList[Tampilkan Kartu / Tabel Siswa]
+    Start([Buka Modul Presensi]) --> SelectParam[Pilih Tanggal, Kategori & Nomor Sesi: 1 atau 2]
+    SelectParam --> QueryStudents[Ambil Data Siswa Sesi Tersebut via SWR Cache]
+    QueryStudents --> RenderCards[Tampilkan Daftar Kartu Siswa]
     
-    DisplayList --> ClickAttend{Pilih Status Kehadiran Siswa}
+    RenderCards --> ClickStatus{Pilih Tombol Kehadiran}
     
-    ClickAttend -->|Hadir| MarkHadir[Set Status: Hadir]
-    MarkHadir --> CallAbsen[Panggil: absenSiswaAction]
-    CallAbsen --> SaveAbsen[(Simpan ke absensi_siswa)]
-    SaveAbsen --> DeductQuota[Trigger DB: Kuota Siswa -1]
-    DeductQuota --> LogCoachDuty[Catat Log Mengajar Pelatih Bertugas]
+    ClickStatus -->|Hadir| ActionHadir[Panggil absenSiswaAction status Hadir]
+    ActionHadir --> SaveHadir[(Simpan ke absensi_siswa)]
+    SaveHadir --> TriggerDeduct[Trigger Database: Kuota Siswa -1]
+    TriggerDeduct --> LogCoach[Catat Otomatis Pelatih Bertugas di Sesi Ini]
     
-    ClickAttend -->|Tidak Hadir / Izin / Sakit| MarkIzin[Set Status: Izin / Sakit]
-    MarkIzin --> CallAbsenIzin[Panggil: absenSiswaAction]
-    CallAbsenIzin --> SaveAbsenIzin[(Simpan Catatan, Kuota Siswa Tetap)]
+    ClickStatus -->|Tidak Hadir / Izin / Sakit| ActionIzin[Panggil absenSiswaAction status Izin/Sakit]
+    ActionIzin --> SaveIzin[(Simpan Catatan Izin, Kuota Siswa Tidak Berkurang)]
     
-    ClickAttend -->|Batal Absensi| CancelAttend[Klik: Batalkan Absensi]
-    CancelAttend --> CallBatal[Panggil: batalkanAbsensiAction]
-    CallBatal --> RevertQuota[(Trigger DB: Kuota Siswa Kembali +1)]
+    ClickStatus -->|Batal Absensi| ActionBatal[Panggil batalkanAbsensiAction]
+    ActionBatal --> RevertQuota[(Trigger Database: Kuota Siswa Kembali Pulih +1)]
     
-    LogCoachDuty --> RefreshAbsensiUI[Update Data SWR & Metrik Sesi]
-    SaveAbsenIzin --> RefreshAbsensiUI
-    RevertQuota --> RefreshAbsensiUI
+    LogCoach --> RefreshUI[Revalidasi Cache SWR & Perbarui Metrik Sesi]
+    SaveIzin --> RefreshUI
+    RevertQuota --> RefreshUI
 ```
 
 ---
 
 #### E. Manajemen Jadwal Latihan Pelatih
 
-Alur pengaturan jadwal latihan mingguan dengan pembatasan hak akses berbasis peran.
+Alur pengaturan jadwal di [src/app/(dashboard)/jadwal/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/jadwal/page.tsx) dengan pengawasan hak akses:
 
 ```mermaid
 flowchart TD
-    Start([Buka Halaman Jadwal]) --> LoadSchedule[Query Data via useJadwal Hook]
-    LoadSchedule --> FilterDayCoach[Filter berdasarkan Hari & Pelatih]
-    FilterDayCoach --> DisplayGrid[Tampilkan Grid Jadwal Mingguan]
+    Start([Buka Halaman Jadwal]) --> LoadData[Query Data Jadwal via useJadwal Hook]
+    LoadData --> FilterGrid[Filter per Hari & Filter per Pelatih]
+    FilterGrid --> DisplayGrid[Tampilkan Tabel Jadwal Mengajar]
     
-    DisplayGrid --> ScheduleAction{Pilihan Operasi}
+    DisplayGrid --> ChooseAction{Aksi Pengguna}
     
-    ScheduleAction -->|Tambah Jadwal| OpenAddModal[Buka Form Tambah Jadwal]
-    ScheduleAction -->|Edit Jadwal| OpenEditModal[Buka Form Edit Jadwal]
-    ScheduleAction -->|Hapus Jadwal| ConfirmDelete[Konfirmasi Hapus Jadwal]
+    ChooseAction -->|Tambah Jadwal| ModalAdd[Buka Modal Tambah Jadwal]
+    ChooseAction -->|Edit Jadwal| ModalEdit[Buka Modal Edit Jadwal]
+    ChooseAction -->|Hapus Jadwal| ConfirmDel[Konfirmasi Hapus Jadwal]
     
-    OpenAddModal --> FillSchedule[Input Pelatih, Hari, Jam Mulai, Tempat, Kelas]
-    OpenEditModal --> FillSchedule
+    ModalAdd --> FillData[Pilih Pelatih, Hari, Jam Mulai, Kolam & Kelas]
+    ModalEdit --> FillData
     
-    FillSchedule --> CheckAuth{Periksa Role Pengguna}
-    CheckAuth -->|Pelatih| CheckSelfCoach{Mengubah jadwal miliknya sendiri?}
-    CheckSelfCoach -- Tidak --> AccessDenied[Tolak: Akses Ditolak]
-    CheckSelfCoach -- Ya --> SaveScheduleAction[Panggil createJadwalAction / updateJadwalAction]
+    FillData --> RoleCheck{Periksa Role}
+    RoleCheck -->|Pelatih| CheckSelf{Jadwal Milik Sendiri?}
+    CheckSelf -- Tidak --> Deny[Ditolak: Hanya Bisa Kelola Jadwal Sendiri]
+    CheckSelf -- Ya --> ExecSave[Panggil createJadwalAction / updateJadwalAction]
     
-    CheckAuth -->|Admin / Owner| SaveScheduleAction
+    RoleCheck -->|Admin / Owner| ExecSave
     
-    ConfirmDelete --> CheckAuthDelete{Periksa Role Hapus}
-    CheckAuthDelete -->|Valid| ExecDeleteAction[Panggil deleteJadwalAction]
-    CheckAuthDelete -->|Tidak Valid| AccessDenied
+    ConfirmDel --> CheckDelRole{Periksa Role Hapus}
+    CheckDelRole -->|Valid| ExecDelete[Panggil deleteJadwalAction]
+    CheckDelRole -->|Tidak Valid| Deny
     
-    SaveScheduleAction --> SaveScheduleDB[(Simpan ke tabel jadwal_pelatih)]
-    ExecDeleteAction --> DeleteScheduleDB[(Hapus dari tabel jadwal_pelatih)]
-    SaveScheduleDB --> RevalidateJadwal[revalidatePath /jadwal & Mutate SWR]
-    DeleteScheduleDB --> RevalidateJadwal
+    ExecSave --> SaveDB[(Simpan ke tabel jadwal_pelatih)]
+    ExecDelete --> DeleteDB[(Hapus dari tabel jadwal_pelatih)]
+    SaveDB --> Revalidate[revalidatePath /jadwal & Mutate SWR]
+    DeleteDB --> Revalidate
 ```
 
 ---
 
-#### F. Penilaian Kinerja Pelatih & Sanksi
+#### F. Manajemen Data Pelatih & Masa Training
 
-Alur evaluasi 5 pilar kompetensi pelatih, pencatatan pelanggaran, dan penerapan sanksi denda.
+Alur pendataan pelatih di [src/app/(dashboard)/pelatih/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/pelatih/page.tsx):
 
 ```mermaid
 flowchart TD
-    Start([Buka Modul Penilaian]) --> PickCoach[Pilih Pelatih & Periode Evaluasi]
-    PickCoach --> InputScores[Input Skor 1-5: Kedisiplinan, Kehadiran, Mengajar, Komunikasi, Laporan]
-    InputScores --> CheckInfraction{Ada Pelanggaran Indisipliner?}
+    Start([Buka Halaman Pelatih]) --> FetchCoaches[Query Pelatih via usePelatih Hook]
+    FetchCoaches --> FilterCoach[Cari Nama/HP/Email & Filter Status: Aktif/Training/Nonaktif]
+    FilterCoach --> CoachTable[Tabel Data Pelatih]
     
-    CheckInfraction -- Ya --> InputViolationDetail[Pilih Kategori, Tanggal & Detail Kejadian]
-    InputViolationDetail --> SelectPenalty[Tentukan Sanksi: Peringatan, Denda Rp, % Potongan, Sesi Tanpa Honor]
+    CoachTable --> CoachAction{Pilih Aksi}
     
-    CheckInfraction -- Tidak --> CalculateAverage[Hitung Rata-Rata Skor KPI]
-    SelectPenalty --> CalculateAverage
+    CoachAction -->|Detail Pelatih| DetailModal[Buka Modal Detail Pelatih]
+    DetailModal --> ShowCoachData[Lihat Kontak, Masa Training & Jumlah Siswa Milik]
     
-    CalculateAverage --> SaveEvaluation[Panggil simpanPenilaianAction]
-    SaveEvaluation --> SaveEvaluationDB[(Simpan ke tabel penilaian_pelatih)]
-    SaveEvaluationDB --> DeductHonorPool[Otomatis Masuk ke Potongan Honor Pelatih]
-    DeductHonorPool --> DisplayScorecard[Tampilkan Rapor Penilaian Pelatih]
+    CoachAction -->|Tambah / Edit Pelatih| FormModal[Buka Form Tambah / Edit Pelatih]
+    FormModal --> InputBasic[Input Nama, No. HP, Email, Alamat, Pendidikan, Sertifikat]
+    InputBasic --> SelectStatus{Status Pelatih?}
+    
+    SelectStatus -->|Training| SetTrainingDate[Input Tanggal Mulai Training]
+    SetTrainingDate --> AutoCalcEndDate[Hitung Otomatis Tanggal Berakhir: +3 Bulan]
+    SelectStatus -->|Aktif / Nonaktif| ClearTraining[Tanpa Masa Training]
+    
+    AutoCalcEndDate --> SubmitCoach[Panggil createPelatihAction / updatePelatihAction]
+    ClearTraining --> SubmitCoach
+    
+    SubmitCoach --> SaveCoachDB[(Simpan ke tabel pelatih)]
+    SaveCoachDB --> RefreshCoaches[Revalidasi SWR & Perbarui Tampilan Tabel]
 ```
 
 ---
 
-#### G. Keuangan & Pelunasan SPP
+#### G. Penilaian Kinerja Pelatih & Sanksi
 
-Alur pelunasan tagihan sisa bertahap, penerbitan kuitansi pelunasan, dan pembukuan kas masuk.
+Alur evaluasi 5 pilar kompetensi dan penegakan sanksi di [src/app/(dashboard)/penilaian/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/penilaian/page.tsx):
 
 ```mermaid
 flowchart TD
-    Start([Buka Modul Keuangan]) --> PickPendingStudent[Pilih Siswa dengan Status Belum Lunas]
-    PickPendingStudent --> ShowBillInfo[Tampilkan Total Tagihan & Sisa Pembayaran]
-    ShowBillInfo --> InputPayAmount[Input Nominal yang Dibayarkan & Metode Bayar]
+    Start([Buka Modul Penilaian]) --> CheckAccess{Bolehkah Menilai?}
+    CheckAccess -->|Pelatih| ReadOnlyHistory[Hanya Bisa Melihat Riwayat Penilaian Sendiri]
+    CheckAccess -->|Owner / Admin| ShowForm[Tampilkan Form Penilaian & Riwayat]
     
-    InputPayAmount --> ValidateNominal{Nominal <= Sisa Tagihan?}
-    ValidateNominal -- Tidak --> AlertOverpay[Peringatan: Nominal Melebihi Sisa Tagihan]
-    ValidateNominal -- Ya --> ProcessPayment[Panggil bayarTagihanAction]
+    ShowForm --> SelectTarget[Pilih Pelatih & Tanggal Penilaian]
+    SelectTarget --> Rate5KPI[Input Skor 1-5: Kedisiplinan, Kehadiran, Mengajar, Komunikasi, Laporan]
+    Rate5KPI --> ViolationCheck{Terdapat Pelanggaran Indisipliner?}
     
-    ProcessPayment --> UpdateDB[(Update tabel pembayaran & paket_siswa)]
-    UpdateDB --> CheckPaidOff{Sisa Tagihan Sekarang == 0?}
+    ViolationCheck -- Ya --> PickViolation[Pilih Kategori: Ringan / Sedang / Berat / Sangat Berat]
+    PickViolation --> InputChronology[Tulis Kronologi Pelanggaran]
+    InputChronology --> DecideSanction[Pilih Sanksi: Teguran / SP-1 / SP-2 / SP-3 / Putus Mitra]
+    DecideSanction --> AutoCalcSanction[Hitung Otomatis: Durasi Hari, % Denda, Sesi Tanpa Honor]
     
-    CheckPaidOff -- Ya --> SetPaidOff[Status Pembayaran: Lunas]
-    CheckPaidOff -- Tidak --> SetPartiallyPaid[Status Pembayaran: Belum Lunas]
+    ViolationCheck -- Tidak --> NoSanction[Sanksi: Tidak Ada]
     
-    SetPaidOff --> CreateReceiptPDF[Generate Kuitansi Pelunasan PDF]
-    SetPartiallyPaid --> CreateReceiptPDF
-    CreateReceiptPDF --> PostToCashLedger[(Catat Otomatis ke Buku Kas Masuk)]
-    PostToCashLedger --> UpdateFinancialDashboard[Perbarui Ringkasan Kas & Dashboard]
+    AutoCalcSanction --> SaveRating[Panggil submitPenilaianAction]
+    NoSanction --> SaveRating
+    
+    SaveRating --> SaveRatingDB[(Simpan Permanen ke tabel penilaian_pelatih)]
+    SaveRatingDB --> RefreshRatingUI[Revalidasi SWR & Masuk ke Tabel Riwayat Penilaian]
 ```
 
 ---
 
-## 5. Arsitektur & Teknologi
+#### H. Log Riwayat & Audit Perubahan Siswa
+
+Alur penelusuran audit di [src/app/(dashboard)/riwayat/page.tsx](file:///Users/faizulmushofa/Documents/my-project/Projek-Kesit/src/app/(dashboard)/riwayat/page.tsx):
+
+```mermaid
+flowchart TD
+    Start([Buka Modul Riwayat]) --> LoadAudit[Ambil Data Log via useRiwayat Hook]
+    LoadAudit --> FilterAudit[Filter Pencarian, Jenis Perubahan, Bulan & Tahun]
+    FilterAudit --> PaginateAudit[Paginasi 10 Data per Halaman]
+    PaginateAudit --> AuditTable[Tabel Log Perubahan Siswa]
+    
+    AuditTable --> ClickDetail[Klik Tombol Detail]
+    ClickDetail --> OpenAuditModal[Buka Modal Detail Riwayat]
+    OpenAuditModal --> DisplayAuditData[Tampilkan Data Sebelum & Sesudah Perubahan, Tanggal & Petugas]
+```
+
+---
+
+## 4. Arsitektur & Teknologi
 
 ```
 ┌────────────────────────────────────────────────────────┐
 │                   CLIENT (BROWSER)                     │
 │  Next.js 16 Client Components (React 19)               │
-│  - SWR (Real-time Cache & Auto Revalidation)           │
-│  - Vanilla CSS + Tailwind CSS v4 Global Design System  │
-│  - Lucide React Icons & jsPDF Kuitansi Generator       │
+│  - SWR (Real-time Cache, Auto Revalidation & Mutate)   │
+│  - CSS Responsive + Tailwind CSS v4 Global Tokens      │
+│  - Lucide React Icons & jsPDF Kuitansi Engine          │
 └───────────────────────────┬────────────────────────────┘
                             │ HTTPS / Server Actions
 ┌───────────────────────────▼────────────────────────────┐
@@ -388,66 +425,65 @@ flowchart TD
 │  - Server Actions (/src/server/actions/*)              │
 │  - Input Validation via Zod 4 (/src/server/validators) │
 │  - Business Services Layer (/src/server/services/*)    │
-│  - Repository Data Access (/src/server/repositories/*) │
+│  - Direct Repository Layer (/src/server/repositories/*)│
 │  - Session & Cookie Config (/src/server/supabase/*)    │
 └───────────────────────────┬────────────────────────────┘
                             │ PostgreSQL Protocol / REST
 ┌───────────────────────────▼────────────────────────────┐
 │               SUPABASE CLOUD DATABASE                  │
-│  - PostgreSQL 15+ Database Engine                      │
+│  - PostgreSQL 15+ Engine                               │
 │  - Row Level Security (RLS) & Multi-Role Policies      │
-│  - Database Triggers (Auto Quota Deduct & Logging)     │
-│  - Materialized Views & Strategic Indexes              │
+│  - Triggers: Auto Quota Deduct & Audit Log Insertion   │
+│  - Database Views (v_absensi_siswa, v_jadwal_pelatih)  │
 └────────────────────────────────────────────────────────┘
 ```
 
-- **Frontend Framework:** Next.js `16.3.5` (App Router, Turbopack/Webpack)
-- **UI Library:** React `19.2.8` & Lucide Icons `1.47.0`
-- **State & Data Fetching:** SWR `2.5.1` (Optimistic updates & cache invalidation)
-- **Validation Engine:** Zod `4.6.5`
-- **PDF Generation:** jsPDF `4.2.1` & jsPDF-AutoTable `5.0.8`
-- **Styling:** Tailwind CSS `v4` & Custom Design Tokens (`globals.css`)
-- **Backend & Auth:** Supabase Auth & SSR Client `@supabase/ssr 0.12.7`
-- **Database Engine:** Supabase PostgreSQL with RLS, Stored Functions & Triggers
+- **Frontend:** Next.js `16.3.5` (App Router), React `19.2.8`, Lucide Icons `1.47.0`
+- **Data Fetching:** SWR `2.5.1` (Optimistic mutation & background refetch)
+- **Validasi Data:** Zod `4.6.5`
+- **Penerbitan Kuitansi:** jsPDF `4.2.1` & jsPDF-AutoTable `5.0.8`
+- **Desain & Gaya:** Tailwind CSS `v4` & Custom Global Design Tokens (`globals.css`)
+- **Backend & Autentikasi:** Supabase Auth & SSR Package `@supabase/ssr 0.12.7`
+- **Basis Data:** Supabase PostgreSQL with RLS, Stored Functions & Triggers
 
 ---
 
-## 6. Struktur Direktori Proyek
+## 5. Struktur Direktori Proyek
 
 ```bash
 Projek-Kesit/
-├── .agents/                    # Konfigurasi skill dan aturan AI coding assistant
-├── public/                     # Aset statis publik (favicon, logo klub, ikon)
-├── scripts/                    # Skrip utilitas database mandiri
+├── .agents/                    # Konfigurasi skill dan panduan AI coding assistant
+├── public/                     # Aset publik statis (favicon, logo klub, ikon)
+├── scripts/                    # Skrip utilitas mandiri basis data
 │   ├── migrate.mjs             # Menjalankan migrasi SQL berurutan
 │   ├── seed.mjs                # Mengisi data awal master & akun uji coba
 │   └── sync-prod-to-dev.mjs    # Sinkronisasi skema production ke lokal
 ├── src/
 │   ├── app/                    # Next.js App Router (Rute & Halaman)
 │   │   ├── (auth)/login/       # Halaman Login
-│   │   ├── (dashboard)/        # Layout utama berotentikasi & Topbar
-│   │   │   ├── absensi/        # Presensi multi-sesi & kuota otomatis
-│   │   │   ├── jadwal/         # Manajemen jadwal latihan pelatih
-│   │   │   ├── keuangan/       # Laporan pembukuan & kas masuk/keluar
-│   │   │   ├── laporan-siswa/  # Evaluasi & perkembangan belajar siswa
-│   │   │   ├── paket-pembayaran/# Master paket & penagihan SPP
-│   │   │   ├── pelatih/        # Direktori & rekap pelatih
-│   │   │   ├── pengaturan/     # Pengaturan sistem & akun
-│   │   │   ├── penilaian/      # Rapor performa KPI pelatih & sanksi
-│   │   │   ├── riwayat/        # Log audit & histori aktivitas sistem
+│   │   ├── (dashboard)/        # Layout dashboard berotentikasi & Topbar
+│   │   │   ├── absensi/        # Presensi multi-sesi & kuota otomatis (Aktif)
+│   │   │   ├── jadwal/         # Manajemen jadwal latihan pelatih (Aktif)
+│   │   │   ├── keuangan/       # Placeholder Keuangan & Kas (Coming Soon)
+│   │   │   ├── laporan-siswa/  # Placeholder Rapor Siswa (Coming Soon)
+│   │   │   ├── paket-pembayaran/# Placeholder Katalog Paket (Coming Soon)
+│   │   │   ├── pelatih/        # Manajemen data pelatih & training (Aktif)
+│   │   │   ├── pengaturan/     # Placeholder Pengaturan Sistem (Coming Soon)
+│   │   │   ├── penilaian/      # Evaluasi performa KPI pelatih & sanksi (Aktif)
+│   │   │   ├── riwayat/        # Log audit & histori mutasi siswa (Aktif)
 │   │   │   ├── siswa/
-│   │   │   │   ├── pendaftaran/# Wizard 4 langkah siswa baru
-│   │   │   │   └── rekapan/    # Tabel siswa, detail, & mutasi kelas
-│   │   │   └── page.tsx        # Dashboard ringkasan metrik utama
-│   │   ├── api/                # API Route Handlers (/api/jadwal, dll)
+│   │   │   │   ├── pendaftaran/# Wizard 4 langkah siswa baru (Aktif)
+│   │   │   │   └── rekapan/    # Tabel siswa, detail & mutasi kelas (Aktif)
+│   │   │   └── page.tsx        # Dashboard ringkasan metrik utama (Aktif)
+│   │   ├── api/                # API Route Handlers (/api/jadwal)
 │   │   ├── globals.css         # Design system & CSS responsive
-│   │   └── layout.tsx          # Root HTML layout & provider
+│   │   └── layout.tsx          # Root HTML layout & toast provider
 │   ├── components/             # Reusable UI & Layout Components
 │   │   ├── layout/             # Topbar, Sidebar, DashboardShell
-│   │   └── ui/                 # Toast, Modal, DataTable, Skeleton, Button
-│   ├── hooks/                  # Custom React Hooks (useAuth, usePelatih, useJadwal)
-│   ├── lib/                    # Library umum (pdf.ts, utils.ts, swr-keys.ts)
-│   ├── server/                 # Arsitektur Backend & Database Access
+│   │   └── ui/                 # Toast, Modal, DataTable, Skeleton, Button, ComingSoon
+│   ├── hooks/                  # Custom Hooks (useAuth, usePelatih, useJadwal, usePenilaian, useRiwayat)
+│   ├── lib/                    # Utilitas (pdf.ts, utils.ts, swr-keys.ts)
+│   ├── server/                 # Arsitektur Backend Server-Side
 │   │   ├── actions/            # Next.js Server Actions ('use server')
 │   │   ├── constants/          # Master lokasi, paket, data sesi, peran (RBAC)
 │   │   ├── repositories/       # Query langsung ke database Supabase
@@ -456,7 +492,7 @@ Projek-Kesit/
 │   │   └── validators/         # Zod schemas untuk validasi input
 │   └── types/                  # Definisi TypeScript interface & database types
 ├── supabase/
-│   └── migrations/             # 001_init_schema.sql s/d 010_jadwal_pelatih.sql
+│   └── migrations/             # Berkas SQL migrasi database (001 s/d 010)
 ├── next.config.ts              # Konfigurasi Next.js (optimasi package imports)
 ├── package.json                # Dependensi proyek & npm scripts
 └── tsconfig.json               # Konfigurasi TypeScript compiler
@@ -464,14 +500,14 @@ Projek-Kesit/
 
 ---
 
-## 7. Panduan Instalasi & Menjalankan Lokal
+## 6. Panduan Instalasi & Menjalankan Lokal
 
-### 7.1 Prasyarat Sistem
+### 6.1 Prasyarat Sistem
 - **Node.js:** Versi `20.x` atau lebih baru
 - **NPM:** Versi `10.x` atau lebih baru
 - **Proyek Supabase:** Instance Supabase PostgreSQL aktif
 
-### 7.2 Langkah Instalasi
+### 6.2 Langkah Instalasi
 
 1. **Clone Repositori:**
    ```bash
@@ -523,7 +559,7 @@ Projek-Kesit/
 
 ---
 
-## 8. Skrip Database & Migrasi
+## 7. Skrip Database & Migrasi
 
 Tersedia sejumlah perintah otomatis pada `package.json`:
 
@@ -536,7 +572,7 @@ Tersedia sejumlah perintah otomatis pada `package.json`:
 
 ---
 
-## 9. Standar Kode & Git Workflow
+## 8. Standar Kode & Git Workflow
 
 1. **Konvensi Branch:**
    - `main` / `dev`: Branch utama terlindungi.
