@@ -44,9 +44,12 @@ export async function getPaginatedRekapanSiswa(
   let query = supabase.from(viewName).select('*', { count: 'exact' });
 
   if (search.trim()) {
-    const q = search.trim();
-    // Using ILIKE supported by our GIN trigram indexes
-    query = query.or(`nama_lengkap.ilike.%${q}%,id_siswa.ilike.%${q}%,nama_wali.ilike.%${q}%`);
+    // Strip karakter yang bisa memanipulasi sintaks filter PostgREST
+    const q = search.trim().replace(/[,().]/g, '');
+    if (q) {
+      // Using ILIKE supported by our GIN trigram indexes
+      query = query.or(`nama_lengkap.ilike.%${q}%,id_siswa.ilike.%${q}%,nama_wali.ilike.%${q}%`);
+    }
   }
 
   if (filterStatus) {

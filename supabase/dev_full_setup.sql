@@ -926,7 +926,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_absensi_siswa_harian
   WHERE nomor_sesi IS NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_absensi_sesi_bulanan
-  ON public.absensi_siswa (siswa_id, date_trunc('month', tanggal)::DATE, nomor_sesi, kategori)
+  ON public.absensi_siswa (
+    siswa_id,
+    EXTRACT(YEAR FROM tanggal),
+    EXTRACT(MONTH FROM tanggal),
+    nomor_sesi,
+    kategori
+  )
   WHERE nomor_sesi IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_absensi_pelatih_tanggal

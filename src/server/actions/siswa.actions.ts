@@ -28,7 +28,13 @@ export async function daftarSiswaAction(
     };
   }
 
-  return siswaService.registerSiswa(parsed.data, profile.role);
+  // Enforce session user identity for audit trail
+  const sanitizedInput: PendaftaranSiswaInput = {
+    ...parsed.data,
+    admin_penerima: profile.nama_tampilan || profile.username,
+  };
+
+  return siswaService.registerSiswa(sanitizedInput, profile.role);
 }
 
 export async function editSiswaAction(
@@ -66,7 +72,13 @@ export async function pindahKelasAction(
     };
   }
 
-  return siswaService.moveSiswaClass(parsed.data, profile.role);
+  // Enforce session user identity for audit trail
+  const sanitizedInput: PindahKelasSiswaInput = {
+    ...parsed.data,
+    diubah_oleh: profile.nama_tampilan || profile.username,
+  };
+
+  return siswaService.moveSiswaClass(sanitizedInput, profile.role);
 }
 
 export async function getPaginatedRekapanSiswaAction(

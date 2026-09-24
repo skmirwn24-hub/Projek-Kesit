@@ -59,10 +59,22 @@ export async function getSiswaUntukAbsensi(
 export async function absenSiswa(
   input: AbsensiSiswaInput,
   dicatatOleh: string,
-  userRole: KesitRole
+  userRole: KesitRole,
+  pelatihId?: string | null
 ): Promise<{ success: boolean; absensiId?: string; error?: string }> {
   if (!hasPermission(userRole, 'absensi:write')) {
     return { success: false, error: 'Akses ditolak: tidak memiliki izin absensi.' };
+  }
+
+  // Pelatih hanya boleh mencatat absensi untuk siswa miliknya
+  if (userRole === 'Pelatih') {
+    if (!pelatihId) {
+      return { success: false, error: 'Akses ditolak: profil pelatih tidak valid.' };
+    }
+    const isOwned = await absensiRepo.isSiswaOwnedByPelatih(input.siswa_id, pelatihId);
+    if (!isOwned) {
+      return { success: false, error: 'Akses ditolak: Anda hanya dapat mencatat absensi siswa bimbingan Anda.' };
+    }
   }
 
   // Validasi Prestasi tidak boleh di hari Senin
@@ -103,10 +115,22 @@ export async function absenSiswa(
 // --------------------------------------------------------
 export async function batalkanAbsen(
   absensiId: string,
-  userRole: KesitRole
+  userRole: KesitRole,
+  pelatihId?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   if (!hasPermission(userRole, 'absensi:write')) {
     return { success: false, error: 'Akses ditolak: tidak memiliki izin absensi.' };
+  }
+
+  // Pelatih hanya boleh membatalkan absensi untuk siswa miliknya
+  if (userRole === 'Pelatih') {
+    if (!pelatihId) {
+      return { success: false, error: 'Akses ditolak: profil pelatih tidak valid.' };
+    }
+    const isOwned = await absensiRepo.isAbsensiOwnedByPelatih(absensiId, pelatihId);
+    if (!isOwned) {
+      return { success: false, error: 'Akses ditolak: absensi ini bukan milik siswa Anda.' };
+    }
   }
 
   try {
@@ -137,7 +161,7 @@ export async function getRekapAbsensi(
 
   try {
     let data: AbsensiSiswaView[];
-    if (isAdminView && (userRole === 'Owner' || userRole === 'Admin')) {
+    if (isAdminView || filterPelatihId !== undefined) {
       data = await absensiRepo.getSemuaAbsensiByBulan(
         bulan,
         tahun,

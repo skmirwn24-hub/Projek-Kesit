@@ -10,6 +10,11 @@ export async function getPenilaianAction(): Promise<{
   data?: PenilaianPelatihView[];
   error?: string;
 }> {
+  const { profile } = await getCurrentUser();
+  if (!profile) {
+    return { success: false, error: 'Sesi tidak valid, silakan login kembali.' };
+  }
+
   try {
     const data = await penilaianService.fetchPenilaianList();
     return { success: true, data };
@@ -35,5 +40,11 @@ export async function submitPenilaianAction(
     };
   }
 
-  return penilaianService.submitPenilaian(parsed.data, profile.role);
+  // Enforce session user identity for audit trail
+  const sanitizedInput: PenilaianInput = {
+    ...parsed.data,
+    diinput_oleh: profile.nama_tampilan || profile.username,
+  };
+
+  return penilaianService.submitPenilaian(sanitizedInput, profile.role);
 }

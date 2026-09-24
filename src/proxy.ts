@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { canAccessPage } from '@/server/constants/page-access';
 import { KesitRole } from '@/types/auth';
+import { authCookieOptions } from '@/server/supabase/config';
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
@@ -18,6 +19,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookieOptions: authCookieOptions,
     cookies: {
       getAll() {
         return request.cookies.getAll();

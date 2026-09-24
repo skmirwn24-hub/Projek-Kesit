@@ -99,10 +99,27 @@ export async function getSiswaUntukAbsensi(
     }
 
     if (rawSiswa) {
-      siswaList = (rawSiswa as any[])
+      type RawSiswaItem = {
+        id: string;
+        id_siswa: string;
+        nama_lengkap: string;
+        nama_panggilan: string | null;
+        pelatih_pemilik_id: string | null;
+        pelatih?: { nama?: string } | null;
+        paket_siswa?: Array<{
+          id: string;
+          kelas?: string | null;
+          kuota_total?: number | null;
+          kuota_terpakai?: number | null;
+          nama_paket?: string | null;
+          status_paket?: string | null;
+        }> | null;
+      };
+
+      siswaList = (rawSiswa as unknown as RawSiswaItem[])
         .map((s) => {
           const pakets = Array.isArray(s.paket_siswa) ? s.paket_siswa : [];
-          const activePaket = pakets.find((p: any) => p.status_paket === 'Aktif') || pakets[0];
+          const activePaket = pakets.find((p) => p.status_paket === 'Aktif') || pakets[0];
 
           let derivedKategori: KategoriKelas = 'Reguler';
           const kelasStr = (activePaket?.kelas || '').toLowerCase();
@@ -251,7 +268,30 @@ export async function getAbsensiByBulan(
       .order('tanggal', { ascending: true });
 
     if (directData) {
-      return (directData as any[]).map((d) => ({
+      type RawDirectAbsensiItem = {
+        id: string;
+        siswa_id: string;
+        paket_siswa_id: string | null;
+        pelatih_id: string | null;
+        nomor_sesi: number | null;
+        tanggal: string;
+        kategori: KategoriKelas;
+        status_hadir: 'Hadir' | 'Tidak Hadir';
+        catatan: string | null;
+        dicatat_oleh: string | null;
+        created_at: string;
+        siswa?: {
+          id_siswa?: string;
+          nama_lengkap?: string;
+          nama_panggilan?: string | null;
+          pelatih_pemilik_id?: string | null;
+          pelatih?: { nama?: string } | null;
+        } | null;
+        pelatih_mengajar?: { nama?: string } | null;
+        paket?: { kuota_total?: number | null; kuota_terpakai?: number | null } | null;
+      };
+
+      return (directData as unknown as RawDirectAbsensiItem[]).map((d) => ({
         id: d.id,
         siswa_id: d.siswa_id,
         id_siswa: d.siswa?.id_siswa || '-',
@@ -349,6 +389,12 @@ export async function absenSiswa(
 
   if (isMissingSupabaseObject(error)) {
     throw new Error(getMissingAbsensiMessage());
+  }
+
+  if (error) {
+    if (/akses ditolak|permission denied|violates|bukan milik|hanya dapat/i.test(error.message)) {
+      throw new Error(error.message);
+    }
   }
 
   console.warn('kesit_absen_siswa RPC not available or failed, executing direct upsert:', error?.message);
@@ -462,4 +508,35 @@ export async function batalkanAbsen(absensiId: string): Promise<void> {
     const currentKuota = pkt?.kuota_terpakai || 0;
     await supabase.from('paket_siswa').update({ kuota_terpakai: Math.max(0, currentKuota - 1) }).eq('id', rec.paket_siswa_id);
   }
+}
+
+export async function isAbsensiOwnedByPelatih(
+  absensiId: string,
+  pelatihId: string
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('absensi_siswa')
+    .select('id, siswa:siswa_id(pelatih_pemilik_id)')
+    .eq('id', absensiId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  const siswa = Array.isArray(data.siswa) ? data.siswa[0] : data.siswa;
+  return siswa?.pelatih_pemilik_id === pelatihId;
+}
+
+export async function isSiswaOwnedByPelatih(
+  siswaId: string,
+  pelatihId: string
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('siswa')
+    .select('id, pelatih_pemilik_id')
+    .eq('id', siswaId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return data.pelatih_pemilik_id === pelatihId;
 }

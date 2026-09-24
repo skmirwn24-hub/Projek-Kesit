@@ -1685,6 +1685,46 @@ tr:hover td {
   color: var(--text-dim);
 }
 
+/* Login Alert Notification */
+.login-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 16px;
+  animation: loginAlertFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes loginAlertFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-alert.sukses {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.login-alert.gagal {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+.login-alert-icon {
+  flex-shrink: 0;
+}
+
 /* ==========================================================================
    TOAST NOTIFICATION SYSTEM
    ========================================================================== */
@@ -1971,10 +2011,11 @@ tr:hover td {
     display: block;
   }
 
-  .main {
+  .main, .main-content {
     margin-left: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    padding: 20px 24px !important;
   }
 
   .topbar {
@@ -1994,61 +2035,359 @@ tr:hover td {
   }
 }
 
+/* ==========================================================================
+   MOBILE BOTTOM NAVIGATION BAR
+   ========================================================================== */
+.mobile-bottom-nav {
+  display: none;
+}
+
 /* Small Smartphone Breakpoint (<= 768px) */
 @media (max-width: 768px) {
+  /* Main Container Clearance for Mobile */
+  .main, .main-content {
+    padding: 12px 12px calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Compact 1-Row Mobile App Header */
   .topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    min-height: 52px;
+    gap: 8px;
   }
 
   .topbar-header-row {
     display: flex;
     align-items: center;
-    width: 100%;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .topbar .page-heading {
+    min-width: 0;
+  }
+
+  .topbar .page-heading h1 {
+    font-size: 16px;
+    font-weight: 750;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .topbar .page-heading p,
+  .topbar .breadcrumb {
+    display: none;
   }
 
   .topbar-right {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    width: auto;
+  }
+
+  .admin-info {
+    display: none;
+  }
+
+  .admin-box {
+    padding: 2px;
+    background: transparent;
+    border: none;
+  }
+
+  .admin-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  /* Fixed Mobile Bottom Nav */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(17, 24, 39, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 150;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s ease, transform 0.1s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottom-nav-item:active {
+    transform: scale(0.92);
+  }
+
+  .bottom-nav-item.active {
+    color: #60a5fa;
+  }
+
+  .bottom-nav-item.active svg {
+    color: #60a5fa;
+    filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.5));
+  }
+
+  /* Stats Grid: 2-Column Compact Layout */
+  .cards,
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .card,
+  .stat-card {
+    min-height: 64px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .card-value,
+  .stat-card strong {
+    font-size: 18px !important;
+  }
+
+  .card-label,
+  .stat-card span {
+    font-size: 11px !important;
+  }
+
+  /* Panel & Section Spacing */
+  .panel,
+  .table-card {
+    border-radius: 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .panel-header,
+  .section-title,
+  .panel-title {
+    padding: 14px 16px !important;
+  }
+
+  .panel-header h2,
+  .section-title h2,
+  .panel-title h2 {
+    font-size: 15.5px !important;
+  }
+
+  .panel-header p,
+  .section-title p,
+  .panel-title p {
+    font-size: 12px !important;
+  }
+
+  /* Filters 2-Column Mobile Grid */
+  .filters,
+  .filter-section {
+    padding: 12px 14px !important;
+    gap: 8px !important;
   }
 
   .filter-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
   }
 
-  .cards {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  .filter-grid .filter-item-search,
+  .filter-grid label:first-child {
+    grid-column: 1 / -1 !important;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  .filter-grid label span {
+    font-size: 11px !important;
   }
 
+  .filter-grid input,
+  .filter-grid select {
+    height: 38px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+    padding: 0 10px !important;
+  }
+
+  /* Mobile Tables with Sticky First Column */
   .table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .modal-content {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    max-height: 90vh;
-    padding: 18px !important;
+  .table-wrapper table th:first-child,
+  .table-wrapper table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--bg-panel);
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35);
   }
 
-  .detail-grid {
-    grid-template-columns: 1fr !important;
+  .table-wrapper table th {
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+    white-space: nowrap;
+  }
+
+  .table-wrapper table td {
+    font-size: 12.5px !important;
+    padding: 8px 10px !important;
+    white-space: nowrap;
+  }
+
+  .table-actions {
+    gap: 6px !important;
+  }
+
+  .table-actions button,
+  .table-actions a {
+    min-height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
   }
 
   .table-footer {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
+    padding: 12px 14px !important;
+  }
+
+  /* Form Grids: 1-Column Responsive Layout */
+  .form-grid,
+  .modal-form-content .form-section .form-grid {
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+    gap: 12px !important;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+    gap: 10px !important;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .package-summary {
+    margin: 12px 10px !important;
+    padding: 12px !important;
+  }
+
+  .summary-item {
+    min-height: 54px !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Form Action Buttons: Full-Width on Mobile */
+  .button-area,
+  .form-actions,
+  .modal-form-actions,
+  .detail-actions {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    margin-top: 14px !important;
+    padding: 14px !important;
+  }
+
+  .button-area button,
+  .form-actions button,
+  .modal-form-actions button,
+  .detail-actions .close-button {
+    width: 100% !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+  }
+
+  /* Modals as Responsive Bottom Sheets on Mobile */
+  .modal-overlay,
+  .modal-backdrop,
+  .absensi-modal-backdrop {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-content,
+  .modal-card,
+  .modal-box,
+  .absensi-modal {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 90vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes modalSlideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header,
+  .absensi-modal-header {
+    padding: 14px 16px !important;
+  }
+
+  .modal-body,
+  .absensi-modal-body {
+    padding: 14px 16px !important;
+  }
+
+  .modal-footer {
+    padding: 12px 16px !important;
+    flex-direction: column-reverse !important;
+  }
+
+  .modal-footer button {
+    width: 100% !important;
+    min-height: 44px !important;
   }
 }
 
@@ -2148,8 +2487,14 @@ tr:hover td {
   justify-content: center;
 }
 
-.absensi-btn-rekap {
+.absensi-header-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.absensi-btn-rekap {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -2168,6 +2513,24 @@ tr:hover td {
   border-color: var(--color-primary);
   color: var(--text-main);
   background: var(--bg-panel-hover);
+}
+
+.absensi-btn-rekap:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .absensi-tabs {
@@ -2581,6 +2944,21 @@ tr:hover td {
   cursor: not-allowed;
 }
 
+.absensi-badge-readonly {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border);
+  background: var(--bg-app);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
 .absensi-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -2732,22 +3110,192 @@ tr:hover td {
 }
 
 @media (max-width: 640px) {
-  .absensi-stats-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  /* Header & Controls Toolbar */
   .absensi-header-controls {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
   }
+
+  .absensi-pelatih-selector {
+    width: 100%;
+  }
+
+  .absensi-pelatih-selector select {
+    width: 100%;
+    min-height: 42px;
+    font-size: 13.5px;
+  }
+
+  .absensi-bulan-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .absensi-bulan-label {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .absensi-nav-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .absensi-header-actions {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
   .absensi-btn-rekap {
-    margin-left: 0;
+    flex: 1;
+    margin-left: 0 !important;
+    min-height: 40px;
+    justify-content: center;
+    font-size: 12.5px;
   }
+
   .absensi-pengganti-section {
     flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .absensi-pengganti-section select {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  /* Horizontal Scrollable Chip Carousel for Sesi */
+  .absensi-sesi-section {
     align-items: flex-start;
   }
+
+  .absensi-sesi-grid {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+
+  .absensi-sesi-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .absensi-sesi-btn {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  /* Micro-Metric Stats Row: 4 Items in 1 Compact Row */
+  .absensi-stats-row {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .absensi-stat-card {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+    padding: 8px 4px !important;
+    gap: 3px !important;
+    min-height: auto !important;
+  }
+
+  .absensi-stat-card svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .absensi-stat-num {
+    font-size: 15px !important;
+    line-height: 1;
+  }
+
+  .absensi-stat-label {
+    font-size: 8.5px !important;
+    letter-spacing: 0;
+  }
+
+  /* Touch-First Student Card Layout */
+  .absensi-student-row {
+    display: grid !important;
+    grid-template-columns: 24px 1fr !important;
+    grid-template-areas:
+      "indicator info"
+      "actions actions" !important;
+    gap: 8px 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .absensi-student-indicator {
+    grid-area: indicator;
+    align-self: start;
+    margin-top: 3px;
+  }
+
+  .absensi-student-info {
+    grid-area: info;
+    min-width: 0;
+  }
+
+  .absensi-student-name {
+    white-space: normal !important;
+    word-break: break-word;
+    font-size: 14.5px !important;
+    font-weight: 700;
+    line-height: 1.3 !important;
+  }
+
+  .absensi-student-meta {
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+    margin-top: 2px;
+  }
+
   .absensi-student-actions {
-    flex-direction: column;
+    grid-area: actions;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 4px;
+  }
+
+  .absensi-btn-hadir,
+  .absensi-btn-tidak-hadir {
+    flex: 1 !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+
+  .absensi-btn-batal {
+    width: 100% !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  .absensi-badge-readonly {
+    width: 100% !important;
+    min-height: 38px !important;
+    justify-content: center !important;
   }
 }
 
