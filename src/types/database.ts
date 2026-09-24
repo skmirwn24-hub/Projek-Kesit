@@ -265,3 +265,20 @@ export interface DashboardStats {
   totalPendapatan: number;
   sisaPiutang: number;
 }
+
+export type HariJadwal = 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu' | 'Minggu';
+
+export interface JadwalPelatih {
+  id: string;
+  pelatih_id: string;
+  hari: HariJadwal;
+  jam_mulai: string;
+  tempat: string;
+  kelas: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JadwalPelatihView extends JadwalPelatih {
+  nama_pelatih: string;
+}
