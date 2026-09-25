@@ -31,7 +31,7 @@ let filterArg = null;
 
 for (let i = 2; i < process.argv.length; i++) {
   const arg = process.argv[i].trim();
-  if (arg === '005+006' || arg === '005,006' || arg.startsWith('00') || arg.startsWith('--')) {
+  if (arg === '005+006' || arg === '005,006' || /^\d{3}/.test(arg) || arg.startsWith('--')) {
     filterArg = arg;
   } else if (!dbPassword) {
     dbPassword = arg;
@@ -103,10 +103,16 @@ async function run() {
     const isOnly008 = filterArg === '008' || filterArg === '008_allow_all_coaches_read_absensi';
     const isOnly009 = filterArg === '009' || filterArg === '009_absensi_caching_performance';
     const isOnly010 = filterArg === '010' || filterArg === '010_jadwal_pelatih';
+    const isOnly011 = filterArg === '011' || filterArg === '011_manajemen_keuangan';
 
     const steps = [];
 
-    if (isOnly010) {
+    if (isOnly011) {
+      steps.push({
+        name: 'Migrasi 011: Manajemen Keuangan & Kas (011_manajemen_keuangan.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '011_manajemen_keuangan.sql'),
+      });
+    } else if (isOnly010) {
       steps.push({
         name: 'Migrasi 010: Jadwal Pelatih (010_jadwal_pelatih.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '010_jadwal_pelatih.sql'),
@@ -167,6 +173,10 @@ async function run() {
       steps.push({
         name: 'Migrasi 010: Jadwal Pelatih (010_jadwal_pelatih.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '010_jadwal_pelatih.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 011: Manajemen Keuangan & Kas (011_manajemen_keuangan.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '011_manajemen_keuangan.sql'),
       });
     }
 

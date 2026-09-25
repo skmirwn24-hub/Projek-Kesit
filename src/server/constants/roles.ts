@@ -14,6 +14,11 @@ export const KESIT_PERMISSIONS: Record<KesitRole, Permission[]> = {
     'siswa:move',
     'pembayaran:read',
     'pembayaran:write',
+    'pembayaran:koleksi_siswa',
+    'keuangan:read',
+    'keuangan:write',
+    'keuangan:delete',
+    'honor:manage',
     'pelatih:read',
     'pelatih:write',
     'penilaian:read',
@@ -30,6 +35,9 @@ export const KESIT_PERMISSIONS: Record<KesitRole, Permission[]> = {
     'siswa:move',
     'pembayaran:read',
     'pembayaran:write',
+    'pembayaran:koleksi_siswa',
+    'keuangan:read',
+    'keuangan:write',
     'pelatih:read',
     'penilaian:read',
     'penilaian:write',
@@ -43,6 +51,7 @@ export const KESIT_PERMISSIONS: Record<KesitRole, Permission[]> = {
     'penilaian:read',
     'absensi:read',
     'absensi:write', // Dibatasi RLS ke siswa miliknya saja
+    'pembayaran:koleksi_siswa', // Dibatasi ke pembayaran siswa binaannya saja di /keuangan
   ],
 };
 
