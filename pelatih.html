@@ -3,21 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Pelatih - KESIT Management</title>
-
   <link rel="stylesheet" href="pelatih.css" />
 </head>
-
 <body>
-
   <div class="app-layout">
-
     <aside class="sidebar">
-
       <div class="brand">
         <div class="brand-logo">K</div>
-
         <div class="brand-text">
           <h2>KESIT</h2>
           <p>Management</p>
@@ -25,621 +18,272 @@
       </div>
 
       <nav class="sidebar-menu">
-
-        <a href="dashboard.html" class="main-menu-link">
-          Dashboard
-        </a>
+        <a href="dashboard.html" class="main-menu-link">Dashboard</a>
 
         <div class="menu-group">
-
-          <div class="menu-title">
-            Siswa
-          </div>
-
-          <a href="pendaftaran-siswa.html" class="submenu-link">
-            Pendaftaran Siswa
-          </a>
-
-          <a href="rekapan-siswa.html" class="submenu-link">
-            Rekapan Siswa
-          </a>
-
+          <div class="menu-title">Siswa</div>
+          <a href="pendaftaran-siswa.html" class="submenu-link owner-admin-only">Pendaftaran Siswa</a>
+          <a href="rekapan-siswa.html" class="submenu-link">Rekapan Siswa</a>
         </div>
 
         <div class="menu-group">
-
-          <div class="menu-title">
-            Pelatih
-          </div>
-
-          <a
-            href="pelatih.html"
-            class="submenu-link active"
-          >
-            Daftar Pelatih
-          </a>
-
-          <a
-            href="penilaian-pelatih.html"
-            class="submenu-link"
-          >
-            Penilaian Pelatih
-          </a>
-
-          <a
-            href="#"
-            class="submenu-link disabled-link"
-          >
-            Rekap Pelatih
-          </a>
-
+          <div class="menu-title">Pelatih</div>
+          <a href="pelatih.html" class="submenu-link active">Daftar Pelatih</a>
+          <a href="penilaian-pelatih.html" class="submenu-link">Penilaian Pelatih</a>
+          <a href="rekap-pelatih.html" class="submenu-link">Rekap Pelatih</a>
         </div>
 
-        <a href="#" class="main-menu-link">
-          Jadwal
-        </a>
-
-        <a href="#" class="main-menu-link">
-          Absensi
-        </a>
-
-        <a href="#" class="main-menu-link">
-          Laporan Siswa
-        </a>
-
-        <a href="#" class="main-menu-link">
-          Paket & Pembayaran
-        </a>
-
-        <a href="#" class="main-menu-link">
-          Keuangan & Kas
-        </a>
-
-        <a href="riwayat.html" class="main-menu-link">
-          Riwayat
-        </a>
-
-        <a href="#" class="main-menu-link">
-          Pengaturan
-        </a>
-
+        <a href="#" class="main-menu-link disabled-link">Jadwal</a>
+        <a href="#" class="main-menu-link disabled-link">Absensi</a>
+        <a href="#" class="main-menu-link disabled-link">Laporan Siswa</a>
+        <a href="#" class="main-menu-link owner-admin-only disabled-link">Paket & Pembayaran</a>
+        <a href="#" class="main-menu-link owner-admin-only disabled-link">Keuangan & Kas</a>
+        <a href="riwayat.html" class="main-menu-link owner-admin-only">Riwayat</a>
+        <a href="#" class="main-menu-link owner-only disabled-link">Pengaturan</a>
       </nav>
 
-      <button
-        type="button"
-        class="logout-btn"
-        onclick="logout()"
-      >
-        Keluar
-      </button>
-
+      <button type="button" class="logout-btn" id="logoutBtn">Keluar</button>
     </aside>
 
     <main class="main-content">
-
       <header class="topbar">
-
         <div>
           <h1>Pelatih</h1>
-
-          <p>
-            Kelola data, status, dan masa training pelatih KESIT Management.
-          </p>
+          <p id="pageSubtitle">Kelola data, status, dan masa training pelatih KESIT Management.</p>
         </div>
 
         <div class="topbar-actions">
-
-          <div class="topbar-badge">
-            Admin KESIT
+          <div class="account-chip">
+            <strong id="accountName">Memuat akun...</strong>
+            <span id="accountRole">-</span>
           </div>
 
-          <button
-            type="button"
-            class="primary-btn"
-            id="btnTambahPelatih"
-          >
+          <button type="button" class="primary-btn" id="btnTambahPelatih">
             + Tambah Pelatih
           </button>
-
         </div>
-
       </header>
 
-      <section class="stats-grid">
+      <section class="readonly-note" id="pelatihReadonlyNote" hidden>
+        <strong>Mode Pelatih — hanya lihat.</strong>
+        <span>Anda dapat melihat daftar pelatih dan statusnya. Pengubahan data hanya untuk Owner.</span>
+      </section>
 
+      <section class="stats-grid">
         <div class="stat-card">
           <span>Total Pelatih</span>
           <strong id="statTotalPelatih">0</strong>
         </div>
-
         <div class="stat-card">
           <span>Aktif</span>
           <strong id="statPelatihAktif">0</strong>
         </div>
-
         <div class="stat-card">
           <span>Training</span>
           <strong id="statPelatihTraining">0</strong>
         </div>
-
         <div class="stat-card">
           <span>Tidak Aktif</span>
           <strong id="statPelatihNonAktif">0</strong>
         </div>
-
       </section>
 
       <section class="panel">
-
         <div class="panel-header">
-
           <div>
             <h2>Daftar Pelatih</h2>
-
-            <p>
-              Data pelatih lama dapat diperbarui tanpa mengubah ID pelatih.
-            </p>
+            <p id="panelDescription">Data pelatih lama dapat diperbarui tanpa mengubah ID pelatih.</p>
           </div>
-
         </div>
 
         <div class="filters">
-
           <div class="filter-item search-item">
-
-            <label for="searchPelatih">
-              Cari Pelatih
-            </label>
-
-            <input
-              type="text"
-              id="searchPelatih"
-              placeholder="Cari nama pelatih..."
-              autocomplete="off"
-            />
-
+            <label for="searchPelatih">Cari Pelatih</label>
+            <input type="text" id="searchPelatih" placeholder="Cari nama pelatih..." autocomplete="off" />
           </div>
 
           <div class="filter-item">
-
-            <label for="filterStatus">
-              Status
-            </label>
-
+            <label for="filterStatus">Status</label>
             <select id="filterStatus">
-
-              <option value="">
-                Semua Status
-              </option>
-
-              <option value="Aktif">
-                Aktif
-              </option>
-
-              <option value="Training">
-                Training
-              </option>
-
-              <option value="Tidak Aktif">
-                Tidak Aktif
-              </option>
-
+              <option value="">Semua Status</option>
+              <option value="Aktif">Aktif</option>
+              <option value="Training">Training</option>
+              <option value="Tidak Aktif">Tidak Aktif</option>
             </select>
-
           </div>
-
         </div>
 
         <div class="table-wrapper">
-
           <table>
-
-            <thead>
-
-              <tr>
-                <th>No</th>
-                <th>Nama Pelatih</th>
-                <th>Kontak</th>
-                <th>Status</th>
-                <th>Masa Training</th>
-                <th>Siswa Milik</th>
-                <th>Aksi</th>
-              </tr>
-
-            </thead>
-
+            <thead id="pelatihTableHead"></thead>
             <tbody id="pelatihTableBody">
-
               <tr>
-                <td colspan="7" class="loading-cell">
-                  Memuat data pelatih...
-                </td>
+                <td colspan="7" class="loading-cell">Memuat data pelatih...</td>
               </tr>
-
             </tbody>
-
           </table>
-
         </div>
-
       </section>
-
     </main>
-
   </div>
 
-
-  <!-- MODAL TAMBAH / EDIT PELATIH -->
-
-  <div
-    class="modal-backdrop"
-    id="formModal"
-  >
-
+  <div class="modal-backdrop" id="formModal">
     <div class="modal-card modal-form-card">
-
       <div class="modal-header">
-
         <div>
-          <h2 id="formModalTitle">
-            Tambah Pelatih
-          </h2>
-
-          <p id="formModalSubtitle">
-            Masukkan data pelatih KESIT Management.
-          </p>
+          <h2 id="formModalTitle">Tambah Pelatih</h2>
+          <p id="formModalSubtitle">Masukkan data pelatih KESIT Management.</p>
         </div>
-
-        <button
-          type="button"
-          class="modal-close"
-          id="closeFormModalBtn"
-        >
-          ×
-        </button>
-
+        <button type="button" class="modal-close" id="closeFormModalBtn">×</button>
       </div>
 
       <form id="formPelatih">
-
         <div class="modal-body">
-
-          <input
-            type="hidden"
-            id="editPelatihId"
-          />
+          <input type="hidden" id="editPelatihId" />
 
           <div class="form-grid">
-
             <div class="form-group full">
-
-              <label for="namaPelatih">
-                Nama Pelatih
-              </label>
-
-              <input
-                type="text"
-                id="namaPelatih"
-                placeholder="Nama lengkap pelatih"
-                required
-              />
-
+              <label for="namaPelatih">Nama Pelatih</label>
+              <input type="text" id="namaPelatih" placeholder="Nama lengkap pelatih" required />
             </div>
 
             <div class="form-group">
-
-              <label for="noHpPelatih">
-                No. HP
-              </label>
-
-              <input
-                type="text"
-                id="noHpPelatih"
-                placeholder="08xxxxxxxxxx"
-              />
-
+              <label for="noHpPelatih">No. HP</label>
+              <input type="text" id="noHpPelatih" placeholder="08xxxxxxxxxx" />
             </div>
 
             <div class="form-group">
-
-              <label for="emailPelatih">
-                Email
-              </label>
-
-              <input
-                type="email"
-                id="emailPelatih"
-                placeholder="email@contoh.com"
-              />
-
+              <label for="emailPelatih">Email</label>
+              <input type="email" id="emailPelatih" placeholder="email@contoh.com" />
             </div>
 
             <div class="form-group full">
-
-              <label for="alamatPelatih">
-                Alamat
-              </label>
-
-              <textarea
-                id="alamatPelatih"
-                rows="3"
-                placeholder="Alamat lengkap pelatih"
-              ></textarea>
-
+              <label for="alamatPelatih">Alamat</label>
+              <textarea id="alamatPelatih" rows="3" placeholder="Alamat lengkap pelatih"></textarea>
             </div>
 
             <div class="form-group">
-
-              <label for="tanggalLahirPelatih">
-                Tanggal Lahir
-              </label>
-
-              <input
-                type="date"
-                id="tanggalLahirPelatih"
-              />
-
+              <label for="tanggalLahirPelatih">Tanggal Lahir</label>
+              <input type="date" id="tanggalLahirPelatih" />
             </div>
 
             <div class="form-group">
-
-              <label for="pendidikanPelatih">
-                Pendidikan
-              </label>
-
-              <input
-                type="text"
-                id="pendidikanPelatih"
-                placeholder="Contoh: S1 Pendidikan Olahraga"
-              />
-
+              <label for="pendidikanPelatih">Pendidikan</label>
+              <input type="text" id="pendidikanPelatih" placeholder="Contoh: S1 Pendidikan Olahraga" />
             </div>
 
             <div class="form-group full">
-
-              <label for="sertifikatPelatih">
-                Sertifikat
-              </label>
-
-              <textarea
-                id="sertifikatPelatih"
-                rows="3"
-                placeholder="Contoh: Lisensi Renang, CPR / First Aid, Pelatih Nasional"
-              ></textarea>
-
+              <label for="sertifikatPelatih">Sertifikat</label>
+              <textarea id="sertifikatPelatih" rows="3" placeholder="Contoh: Lisensi Renang, CPR / First Aid"></textarea>
             </div>
 
             <div class="form-group">
-
-              <label for="statusPelatih">
-                Status Pelatih
-              </label>
-
-              <select
-                id="statusPelatih"
-                required
-              >
-
-                <option value="Aktif">
-                  Aktif
-                </option>
-
-                <option value="Training">
-                  Training
-                </option>
-
-                <option value="Tidak Aktif">
-                  Tidak Aktif
-                </option>
-
+              <label for="statusPelatih">Status Pelatih</label>
+              <select id="statusPelatih" required>
+                <option value="Aktif">Aktif</option>
+                <option value="Training">Training</option>
+                <option value="Tidak Aktif">Tidak Aktif</option>
               </select>
-
             </div>
 
-            <div
-              class="form-group"
-              id="trainingDateGroup"
-            >
-
-              <label for="tanggalMulaiTraining">
-                Tanggal Mulai Training
-              </label>
-
-              <input
-                type="date"
-                id="tanggalMulaiTraining"
-              />
-
+            <div class="form-group" id="trainingDateGroup">
+              <label for="tanggalMulaiTraining">Tanggal Mulai Training</label>
+              <input type="date" id="tanggalMulaiTraining" />
             </div>
 
-            <div
-              class="training-info full"
-              id="trainingInfo"
-            >
-
-              <strong>
-                Masa Training
-              </strong>
-
-              <span id="trainingInfoText">
-                Training berlaku 3 bulan.
-              </span>
-
+            <div class="training-info full" id="trainingInfo">
+              <strong>Masa Training</strong>
+              <span id="trainingInfoText">Training berlaku 3 bulan.</span>
             </div>
-
           </div>
-
         </div>
 
         <div class="modal-footer">
-
-          <button
-            type="button"
-            class="secondary-btn"
-            id="cancelFormBtn"
-          >
-            Batal
-          </button>
-
-          <button
-            type="submit"
-            class="primary-btn"
-            id="savePelatihBtn"
-          >
-            Simpan Pelatih
-          </button>
-
+          <button type="button" class="secondary-btn" id="cancelFormBtn">Batal</button>
+          <button type="submit" class="primary-btn" id="savePelatihBtn">Simpan Pelatih</button>
         </div>
-
       </form>
-
     </div>
-
   </div>
 
-
-  <!-- MODAL DETAIL PELATIH -->
-
-  <div
-    class="modal-backdrop"
-    id="detailModal"
-  >
-
+  <div class="modal-backdrop" id="detailModal">
     <div class="modal-card">
-
       <div class="modal-header">
-
         <div>
           <h2>Detail Pelatih</h2>
           <p id="detailNamaPelatih">-</p>
         </div>
-
-        <button
-          type="button"
-          class="modal-close"
-          id="closeDetailModalBtn"
-        >
-          ×
-        </button>
-
+        <button type="button" class="modal-close" id="closeDetailModalBtn">×</button>
       </div>
 
       <div class="modal-body">
-
         <div class="detail-grid">
-
           <div class="detail-box">
             <span>Nama</span>
             <strong id="detailNama">-</strong>
           </div>
-
           <div class="detail-box">
             <span>Status</span>
             <strong id="detailStatus">-</strong>
           </div>
-
-          <div class="detail-box">
+          <div class="detail-box private-detail">
             <span>No. HP</span>
             <strong id="detailNoHp">-</strong>
           </div>
-
-          <div class="detail-box">
+          <div class="detail-box private-detail">
             <span>Email</span>
             <strong id="detailEmail">-</strong>
           </div>
-
-          <div class="detail-box">
+          <div class="detail-box private-detail">
             <span>Tanggal Lahir</span>
             <strong id="detailTanggalLahir">-</strong>
           </div>
-
-          <div class="detail-box">
+          <div class="detail-box private-detail">
             <span>Pendidikan</span>
             <strong id="detailPendidikan">-</strong>
           </div>
-
           <div class="detail-box">
             <span>Mulai Training</span>
             <strong id="detailMulaiTraining">-</strong>
           </div>
-
           <div class="detail-box">
             <span>Berakhir Training</span>
             <strong id="detailBerakhirTraining">-</strong>
           </div>
-
-          <div class="detail-box">
+          <div class="detail-box owner-admin-detail">
             <span>Jumlah Siswa Milik</span>
             <strong id="detailJumlahSiswa">0</strong>
           </div>
-
         </div>
 
-        <div class="detail-text-box">
-
+        <div class="detail-text-box private-detail">
           <span>Alamat</span>
-
           <p id="detailAlamat">-</p>
-
         </div>
 
-        <div class="detail-text-box">
-
+        <div class="detail-text-box private-detail">
           <span>Sertifikat</span>
-
           <p id="detailSertifikat">-</p>
-
         </div>
 
-        <div class="student-section">
-
-          <h3>
-            Daftar Siswa Milik Pelatih
-          </h3>
-
-          <div
-            class="student-list"
-            id="detailSiswaList"
-          >
+        <div class="student-section owner-admin-detail">
+          <h3>Daftar Siswa Milik Pelatih</h3>
+          <div class="student-list" id="detailSiswaList">
             <p>Belum ada siswa.</p>
           </div>
-
         </div>
-
       </div>
 
       <div class="modal-footer">
-
-        <button
-          type="button"
-          class="secondary-btn"
-          id="closeDetailFooterBtn"
-        >
-          Tutup
-        </button>
-
-        <button
-          type="button"
-          class="primary-btn"
-          id="editFromDetailBtn"
-        >
-          Edit Data
-        </button>
-
+        <button type="button" class="secondary-btn" id="closeDetailFooterBtn">Tutup</button>
+        <button type="button" class="primary-btn" id="editFromDetailBtn">Edit Data</button>
       </div>
-
     </div>
-
   </div>
 
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script src="supabase-config.js"></script>
-
   <script src="auth-guard.js"></script>
-
   <script src="pelatih.js"></script>
-
 </body>
 </html>
