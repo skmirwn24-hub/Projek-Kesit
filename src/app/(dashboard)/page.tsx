@@ -117,20 +117,20 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* KEUANGAN (Owner & Admin only) */}
+      {/* KEUANGAN & KAS KLUB (Owner & Admin only) */}
       {!isPelatih && (
         <>
           <section className="section-heading">
             <div>
-              <h2>Keuangan & Tagihan SPP</h2>
-              <p>Ringkasan realisasi penerimaan dan piutang siswa</p>
+              <h2>Keuangan & Kas Klub</h2>
+              <p>Ringkasan realisasi saldo kas klub, pengeluaran, dan piutang tagihan siswa</p>
             </div>
           </section>
 
           <section className="finance-grid">
             {loading ? (
               <>
-                {Array.from({ length: 3 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="finance-card">
                     <Skeleton style={{ height: '14px', width: '50%', marginBottom: '8px' }} />
                     <Skeleton style={{ height: '24px', width: '70%' }} />
@@ -140,9 +140,23 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="finance-card">
-                  <span>Pemasukan Terbayar</span>
-                  <strong id="pemasukanBulanIni">
-                    {formatRupiah(stats?.totalPendapatan ?? 0)}
+                  <span>Saldo Kas Klub Terkini</span>
+                  <strong id="saldoKasKlub" style={{ color: (stats?.saldoKas ?? 0) >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                    {formatRupiah(stats?.saldoKas ?? stats?.totalPendapatan ?? 0)}
+                  </strong>
+                </div>
+
+                <div className="finance-card">
+                  <span>Total Kas Masuk</span>
+                  <strong id="totalKasMasuk" style={{ color: 'var(--color-success)' }}>
+                    {formatRupiah(stats?.totalKasMasuk ?? stats?.totalPendapatan ?? 0)}
+                  </strong>
+                </div>
+
+                <div className="finance-card">
+                  <span>Total Kas Keluar</span>
+                  <strong id="totalKasKeluar" style={{ color: (stats?.totalKasKeluar ?? 0) > 0 ? 'var(--color-danger)' : 'inherit' }}>
+                    {formatRupiah(stats?.totalKasKeluar ?? 0)}
                   </strong>
                 </div>
 

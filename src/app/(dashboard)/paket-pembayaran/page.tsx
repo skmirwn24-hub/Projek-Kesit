@@ -1,22 +1,28 @@
 'use client';
 
-import React from 'react';
-import { CreditCard } from 'lucide-react';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-export default function PaketPembayaranPage() {
+export default function PaketPembayaranRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/paket-pembayaran/spp');
+  }, [router]);
+
   return (
-    <ComingSoon
-      title="Katalog Paket & Pembayaran"
-      subtitle="Katalog paket kursus renang, perpanjangan kuota, dan tagihan SPP"
-      breadcrumb={[{ label: 'KESIT Management' }, { label: 'Paket & Pembayaran' }]}
-      icon={CreditCard}
-      description="Pengelolaan katalog paket renang, perpanjangan kuota siswa, dan pencatatan pelunasan tagihan SPP."
-      features={[
-        'Katalog tarif paket kursus per lokasi dan kategori kelas',
-        'Pencatatan pembayaran bertahap dan pelunasan tagihan',
-        'Cetak ulang kuitansi pembayaran siswa',
-      ]}
-    />
+    <div style={{
+      minHeight: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px',
+      color: 'var(--text-muted)',
+    }}>
+      <Loader2 className="animate-spin" size={32} />
+      <span>Mengalihkan ke Pembayaran SPP...</span>
+    </div>
   );
 }

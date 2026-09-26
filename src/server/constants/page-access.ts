@@ -10,8 +10,13 @@ export const KESIT_PAGE_ACCESS: Record<string, KesitRole[]> = {
   '/jadwal': ['Owner', 'Admin', 'Pelatih'],
   '/absensi': ['Owner', 'Admin', 'Pelatih'],
   '/laporan-siswa': ['Owner', 'Admin', 'Pelatih'],
-  '/paket-pembayaran': ['Owner', 'Admin'],
+  '/paket-pembayaran': ['Owner', 'Admin', 'Pelatih'],
+  '/paket-pembayaran/spp': ['Owner', 'Admin', 'Pelatih'],
+  '/paket-pembayaran/katalog': ['Owner', 'Admin'],
   '/keuangan': ['Owner', 'Admin'],
+  '/keuangan/buku-kas': ['Owner', 'Admin'],
+  '/keuangan/honor-pelatih': ['Owner', 'Admin'],
+  '/keuangan/audit-log': ['Owner'],
   '/pengaturan': ['Owner', 'Admin'],
 };
 

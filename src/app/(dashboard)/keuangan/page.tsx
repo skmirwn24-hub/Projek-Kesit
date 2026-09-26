@@ -1,22 +1,28 @@
 'use client';
 
-import React from 'react';
-import { Wallet } from 'lucide-react';
-import { ComingSoon } from '@/components/ui/coming-soon';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-export default function KeuanganPage() {
+export default function KeuanganRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/keuangan/buku-kas');
+  }, [router]);
+
   return (
-    <ComingSoon
-      title="Keuangan, Kas & Penggajian"
-      subtitle="Buku kas operasional, penerimaan SPP, dan penghitungan honor pelatih"
-      breadcrumb={[{ label: 'KESIT Management' }, { label: 'Keuangan & Kas' }]}
-      icon={Wallet}
-      description="Buku kas operasional KESIT, rekap pembayaran SPP, dan penghitungan honor mengajar pelatih per sesi."
-      features={[
-        'Pencatatan kas masuk operasional dan pengeluaran berkala',
-        'Penghitungan honor pelatih berdasarkan jumlah sesi mengajar',
-        'Laporan rekapitulasi keuangan per cabang lokasi kolam',
-      ]}
-    />
+    <div style={{
+      minHeight: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px',
+      color: 'var(--text-muted)',
+    }}>
+      <Loader2 className="animate-spin" size={32} />
+      <span>Mengalihkan ke Buku Kas...</span>
+    </div>
   );
 }

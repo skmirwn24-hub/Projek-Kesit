@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -38,10 +38,42 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const isJadwal = pathname === '/jadwal';
   const isAbsensi = pathname === '/absensi';
   const isLaporanSiswa = pathname === '/laporan-siswa';
-  const isPaketPembayaran = pathname === '/paket-pembayaran';
-  const isKeuangan = pathname === '/keuangan';
+  const isPaketPembayaranSpp = pathname === '/paket-pembayaran/spp' || pathname === '/paket-pembayaran';
+  const isPaketPembayaranKatalog = pathname === '/paket-pembayaran/katalog';
+  const isKeuanganBukuKas = pathname === '/keuangan/buku-kas' || pathname === '/keuangan';
+  const isKeuanganHonor = pathname === '/keuangan/honor-pelatih';
+  const isKeuanganAudit = pathname === '/keuangan/audit-log';
   const isRiwayat = pathname === '/riwayat';
   const isPengaturan = pathname === '/pengaturan';
+
+  // Active section helpers
+  const isSiswaActive = pathname.startsWith('/siswa');
+  const isPelatihActive = pathname === '/pelatih' || pathname === '/penilaian';
+  const isPaketActive = pathname.startsWith('/paket-pembayaran');
+  const isKeuanganActive = pathname.startsWith('/keuangan');
+
+  // Dropdown state for collapsible groups
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    siswa: isSiswaActive || true,
+    pelatih: isPelatihActive,
+    paket: isPaketActive,
+    keuangan: isKeuanganActive,
+  });
+
+  // Automatically expand group whenever navigating to a route inside it
+  useEffect(() => {
+    if (isSiswaActive) setOpenGroups((prev) => ({ ...prev, siswa: true }));
+    if (isPelatihActive) setOpenGroups((prev) => ({ ...prev, pelatih: true }));
+    if (isPaketActive) setOpenGroups((prev) => ({ ...prev, paket: true }));
+    if (isKeuanganActive) setOpenGroups((prev) => ({ ...prev, keuangan: true }));
+  }, [isSiswaActive, isPelatihActive, isPaketActive, isKeuanganActive]);
+
+  const toggleGroup = (key: string) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   return (
     <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
@@ -84,66 +116,80 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
         {/* SISWA */}
         <div className="menu-group">
-          <div className="menu-parent">
+          <button
+            type="button"
+            className={`menu-parent ${isSiswaActive ? 'active-parent' : ''}`}
+            onClick={() => toggleGroup('siswa')}
+            aria-expanded={openGroups.siswa}
+          >
             <span className="menu-icon">
               <Users size={18} />
             </span>
             <span>Siswa</span>
-            <span className="menu-arrow">
+            <span className={`menu-arrow ${openGroups.siswa ? 'open' : ''}`}>
               <ChevronDown size={14} />
             </span>
-          </div>
+          </button>
 
-          <div className="submenu">
-            {!isPelatih && (
+          {openGroups.siswa && (
+            <div className="submenu">
+              {!isPelatih && (
+                <Link
+                  href="/siswa/pendaftaran"
+                  className={`submenu-item ${isSiswaPendaftaran ? 'active' : ''}`}
+                  onClick={onClose}
+                >
+                  Pendaftaran Siswa
+                </Link>
+              )}
+
               <Link
-                href="/siswa/pendaftaran"
-                className={`submenu-item ${isSiswaPendaftaran ? 'active' : ''}`}
+                href="/siswa/rekapan"
+                className={`submenu-item ${isSiswaRekapan ? 'active' : ''}`}
                 onClick={onClose}
               >
-                Pendaftaran Siswa
+                Rekapan Siswa
               </Link>
-            )}
-
-            <Link
-              href="/siswa/rekapan"
-              className={`submenu-item ${isSiswaRekapan ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              Rekapan Siswa
-            </Link>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* PELATIH */}
         <div className="menu-group">
-          <div className="menu-parent">
+          <button
+            type="button"
+            className={`menu-parent ${isPelatihActive ? 'active-parent' : ''}`}
+            onClick={() => toggleGroup('pelatih')}
+            aria-expanded={openGroups.pelatih}
+          >
             <span className="menu-icon">
               <GraduationCap size={18} />
             </span>
             <span>Pelatih</span>
-            <span className="menu-arrow">
+            <span className={`menu-arrow ${openGroups.pelatih ? 'open' : ''}`}>
               <ChevronDown size={14} />
             </span>
-          </div>
+          </button>
 
-          <div className="submenu">
-            <Link
-              href="/pelatih"
-              className={`submenu-item ${isPelatihDaftar ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              Daftar Pelatih
-            </Link>
+          {openGroups.pelatih && (
+            <div className="submenu">
+              <Link
+                href="/pelatih"
+                className={`submenu-item ${isPelatihDaftar ? 'active' : ''}`}
+                onClick={onClose}
+              >
+                Daftar Pelatih
+              </Link>
 
-            <Link
-              href="/penilaian"
-              className={`submenu-item ${isPelatihPenilaian ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              Penilaian Pelatih
-            </Link>
-          </div>
+              <Link
+                href="/penilaian"
+                className={`submenu-item ${isPelatihPenilaian ? 'active' : ''}`}
+                onClick={onClose}
+              >
+                Penilaian Pelatih
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* JADWAL */}
@@ -182,31 +228,109 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <span>Laporan Siswa</span>
         </Link>
 
+        {/* PEMBAYARAN SPP (UNTUK PELATIH) */}
+        {isPelatih && (
+          <Link
+            href="/paket-pembayaran/spp"
+            className={`menu ${isPaketPembayaranSpp ? 'active' : ''}`}
+            onClick={onClose}
+          >
+            <span className="menu-icon">
+              <CreditCard size={18} />
+            </span>
+            <span>Pembayaran SPP</span>
+          </Link>
+        )}
+
+        {/* PAKET & PEMBAYARAN (UNTUK OWNER & ADMIN) */}
         {!isPelatih && (
-          <>
-            {/* PAKET & PEMBAYARAN */}
-            <Link
-              href="/paket-pembayaran"
-              className={`menu ${isPaketPembayaran ? 'active' : ''}`}
-              onClick={onClose}
+          <div className="menu-group">
+            <button
+              type="button"
+              className={`menu-parent ${isPaketActive ? 'active-parent' : ''}`}
+              onClick={() => toggleGroup('paket')}
+              aria-expanded={openGroups.paket}
             >
               <span className="menu-icon">
                 <CreditCard size={18} />
               </span>
-              <span>Paket & Pembayaran</span>
-            </Link>
-
-            {/* KEUANGAN & KAS */}
-            <Link
-              href="/keuangan"
-              className={`menu ${isKeuangan ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              <span className="menu-icon">
-                <Wallet size={18} />
+              <span>Paket & SPP</span>
+              <span className={`menu-arrow ${openGroups.paket ? 'open' : ''}`}>
+                <ChevronDown size={14} />
               </span>
-              <span>Keuangan & Kas</span>
-            </Link>
+            </button>
+
+            {openGroups.paket && (
+              <div className="submenu">
+                <Link
+                  href="/paket-pembayaran/spp"
+                  className={`submenu-item ${isPaketPembayaranSpp ? 'active' : ''}`}
+                  onClick={onClose}
+                >
+                  Pembayaran SPP
+                </Link>
+
+                <Link
+                  href="/paket-pembayaran/katalog"
+                  className={`submenu-item ${isPaketPembayaranKatalog ? 'active' : ''}`}
+                  onClick={onClose}
+                >
+                  Katalog Paket Kursus
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isPelatih && (
+          <>
+            {/* KEUANGAN & KAS (UNTUK OWNER & ADMIN) */}
+            <div className="menu-group">
+              <button
+                type="button"
+                className={`menu-parent ${isKeuanganActive ? 'active-parent' : ''}`}
+                onClick={() => toggleGroup('keuangan')}
+                aria-expanded={openGroups.keuangan}
+              >
+                <span className="menu-icon">
+                  <Wallet size={18} />
+                </span>
+                <span>Keuangan & Kas</span>
+                <span className={`menu-arrow ${openGroups.keuangan ? 'open' : ''}`}>
+                  <ChevronDown size={14} />
+                </span>
+              </button>
+
+              {openGroups.keuangan && (
+                <div className="submenu">
+                  <Link
+                    href="/keuangan/buku-kas"
+                    className={`submenu-item ${isKeuanganBukuKas ? 'active' : ''}`}
+                    onClick={onClose}
+                  >
+                    Buku Kas Operasional
+                  </Link>
+
+                  <Link
+                    href="/keuangan/honor-pelatih"
+                    className={`submenu-item ${isKeuanganHonor ? 'active' : ''}`}
+                    onClick={onClose}
+                  >
+                    Honor Pelatih
+                  </Link>
+
+                  {role === 'Owner' && (
+                    <Link
+                      href="/keuangan/audit-log"
+                      className={`submenu-item ${isKeuanganAudit ? 'active' : ''}`}
+                      onClick={onClose}
+                    >
+                      Audit Log Pembatalan
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* RIWAYAT */}
             <Link
