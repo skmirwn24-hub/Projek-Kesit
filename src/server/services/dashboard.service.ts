@@ -41,5 +41,8 @@ export async function getDashboardStats(
     pelatihNonaktif: Number(data.pelatih_nonaktif) || 0,
     totalPendapatan: isPelatih ? 0 : Number(data.total_pendapatan) || 0,
     sisaPiutang: isPelatih ? 0 : Number(data.sisa_piutang) || 0,
+    saldoKas: isPelatih ? 0 : Number(data.saldo_kas) || 0,
+    totalKasMasuk: isPelatih ? 0 : Number(data.total_kas_masuk) || 0,
+    totalKasKeluar: isPelatih ? 0 : Number(data.total_kas_keluar) || 0,
   };
 }

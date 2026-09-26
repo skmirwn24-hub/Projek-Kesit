@@ -264,6 +264,9 @@ export interface DashboardStats {
   pelatihNonaktif: number;
   totalPendapatan: number;
   sisaPiutang: number;
+  saldoKas?: number;
+  totalKasMasuk?: number;
+  totalKasKeluar?: number;
 }
 
 export type HariJadwal = 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu' | 'Minggu';
