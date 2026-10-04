@@ -60,6 +60,7 @@ Sistem ini dibangun untuk memfasilitasi kebutuhan operasional nyata di sekolah r
 | **Data Pelatih** | `/pelatih` | ✅ Aktif | Statistik pelatih, tambah/edit pelatih, status (*Aktif*, *Training*, *Nonaktif*), otomatisasi masa training 3 bulan, pelacakan jumlah siswa milik. |
 | **Penilaian Pelatih** | `/penilaian` | ✅ Aktif | Evaluasi 5 pilar KPI skor 1-5, standar KKM 4.00, pencatatan pelanggaran, putusan sanksi (*Teguran*, *SP-1*, *SP-2*, *SP-3*, *Putus Mitra*), riwayat evaluasi. |
 | **Riwayat / Audit Log** | `/riwayat` | ✅ Aktif | Log audit riwayat mutasi siswa, pendaftaran, filter jenis perubahan, bulan, tahun, dan paginasi data. |
+| **Rapor & Laporan Siswa** | `/laporan-siswa` | ✅ Aktif | Evaluasi 6 teknik renang (posisi, kaki, tangan, napas, koordinasi, jarak & waktu), live average score, auto-grade kenaikan level, unduh Rapor PDF & Sertifikat resmi (`jsPDF`), share WhatsApp wali. |
 
 ### 1.2 Fitur Dalam Tahap Pengembangan (Coming Soon)
 
@@ -69,7 +70,6 @@ Halaman-halaman berikut saat ini berstatus placeholder/halaman persiapan (`<Comi
 | :--- | :--- | :---: | :--- |
 | **Keuangan, Kas & Penggajian** | `/keuangan` | ⏳ *Coming Soon* | Buku kas operasional klub, pencatatan kas masuk/keluar, dan sistem penggajian pelatih per sesi. |
 | **Katalog Paket & Pembayaran** | `/paket-pembayaran`| ⏳ *Coming Soon* | Katalog tarif paket, perpanjangan kuota mandiri, dan modul pelunasan tagihan bertahap. |
-| **Rapor & Laporan Siswa** | `/laporan-siswa` | ⏳ *Coming Soon* | Rapor perkembangan gaya renang (dada, bebas, punggung, kupu-kupu) dan sertifikasi kenaikan tingkat. |
 | **Pengaturan Sistem** | `/pengaturan` | ⏳ *Coming Soon* | Konfigurasi akun staf internal, manajemen cabang kolam, dan pencadangan data sistem. |
 
 ---
