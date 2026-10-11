@@ -60,31 +60,18 @@ export function DetailLaporanModal({
   };
 
   const handleDownloadSertifikat = () => {
-    if (sertifikat) {
-      generateSertifikatPDF(sertifikat, laporan.nama_siswa, laporan.id_siswa);
-    } else {
-      // Mock sertifikat data if not in db yet
-      const fallbackCert = {
-        id: 'temp',
-        laporan_id: laporan.id,
-        siswa_id: laporan.siswa_id,
-        nomor_sertifikat:
-          laporan.nomor_sertifikat || `CERT/KESIT/${laporan.periode_tahun}/001`,
-        level_kelulusan: laporan.rekomendasi_level || laporan.level_saat_ini,
-        tanggal_terbit: laporan.tanggal_penilaian,
-        penandatangan_nama: 'Head Coach KESIT',
-        penandatangan_jabatan: 'Kepala Pelatih & Evaluator',
-        predikat:
-          Number(laporan.nilai_rata_rata) >= 4.5
-            ? 'Dengan Pujian (Cum Laude)'
-            : Number(laporan.nilai_rata_rata) >= 4.0
-            ? 'Sangat Baik'
-            : 'Baik',
-        created_at: new Date().toISOString(),
-      };
-      generateSertifikatPDF(fallbackCert, laporan.nama_siswa, laporan.id_siswa);
-    }
-  };
+  if (sertifikat) {
+    generateSertifikatPDF(
+      sertifikat,
+      laporan.nama_siswa,
+      laporan.id_siswa
+    );
+  } else {
+    window.alert(
+      'Sertifikat belum tersedia di database.'
+    );
+  }
+};
 
   const handleShareWhatsApp = () => {
     const rawPhone = laporan.no_hp_wali || '';
