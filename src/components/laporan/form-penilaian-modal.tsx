@@ -88,6 +88,7 @@ export function FormPenilaianModal({
   useEffect(() => {
     if (editData) {
       const { laporan, details } = editData;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Mengisi formulir saat mengedit laporan.
       setSiswaId(laporan.siswa_id);
       setPelatihId(laporan.pelatih_id || '');
       setPeriodeBulan(String(laporan.periode_bulan));

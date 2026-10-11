@@ -47,3 +47,6 @@ _legacy/
 # agents & ai skills
 .agents/
 
+/playwright-report/
+/test-results/
+*.bak-*

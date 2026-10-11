@@ -119,7 +119,7 @@ export function AuditLogTab() {
                         borderRadius: '6px',
                         display: 'inline-block',
                       }}>
-                        "{item.alasan_hapus || 'Tidak ada alasan dicatat'}"
+                        &ldquo;{item.alasan_hapus || 'Tidak ada alasan dicatat'}&rdquo;
                       </span>
                     </td>
                   </tr>

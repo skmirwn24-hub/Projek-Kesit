@@ -62,6 +62,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
   // Automatically expand group whenever navigating to a route inside it
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Membuka grup navigasi sesuai rute aktif.
     if (isSiswaActive) setOpenGroups((prev) => ({ ...prev, siswa: true }));
     if (isPelatihActive) setOpenGroups((prev) => ({ ...prev, pelatih: true }));
     if (isPaketActive) setOpenGroups((prev) => ({ ...prev, paket: true }));
