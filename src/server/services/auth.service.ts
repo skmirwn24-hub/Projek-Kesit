@@ -28,8 +28,17 @@ export async function loginWithIdentifier(
   });
 
   if (authError || !authData.user) {
-    return { success: false, error: 'Email/username atau password tidak sesuai.' };
-  }
+      console.error('[KESIT_LOGIN_AUTH_ERROR]', {
+    code: authError?.code ?? null,
+    status: authError?.status ?? null,
+    message: authError?.message ?? null,
+  });
+
+  return {
+    success: false,
+    error: 'Email/username atau password tidak sesuai.',
+  };
+}
 
   // Fetch profile
   const profile = await userRepo.getUserProfile(authData.user.id);
