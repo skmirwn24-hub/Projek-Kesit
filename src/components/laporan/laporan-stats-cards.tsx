@@ -11,67 +11,86 @@ interface LaporanStatsCardsProps {
 export function LaporanStatsCards({ stats }: LaporanStatsCardsProps) {
   const cards = [
     {
-      label: 'Total Rapor Diterbitkan',
-      value: stats.totalRapor,
+      label: 'Total Rapor',
       sublabel: 'Seluruh arsip penilaian',
+      value: stats.totalRapor,
       icon: FileText,
       iconColor: 'text-sky-400',
       iconBg: 'bg-sky-500/10 border-sky-500/20',
-      accentColor: 'from-sky-500/10 to-transparent',
+      gradient: 'from-sky-500/10 via-transparent to-transparent',
     },
     {
-      label: 'Siswa Naik Tingkat / Lulus',
+      label: 'Naik / Lulus',
+      sublabel: 'Rekomendasi naik tingkat',
       value: stats.totalNaikLevel,
-      sublabel: 'Rekomendasi level lanjutan',
       icon: Award,
       iconColor: 'text-emerald-400',
       iconBg: 'bg-emerald-500/10 border-emerald-500/20',
-      accentColor: 'from-emerald-500/10 to-transparent',
+      gradient: 'from-emerald-500/10 via-transparent to-transparent',
     },
     {
-      label: 'Rata-rata Skor Siswa',
-      value: `${stats.rataRataNilai.toFixed(2)} / 5.0`,
-      sublabel: 'Skor rata-rata kompetensi',
+      label: 'Rata-rata Skor',
+      sublabel: 'Kompetensi teknik renang',
+      value: `${Number(stats.rataRataNilai).toFixed(2)}`,
+      unit: '/ 5.0',
       icon: Star,
       iconColor: 'text-amber-400',
       iconBg: 'bg-amber-500/10 border-amber-500/20',
-      accentColor: 'from-amber-500/10 to-transparent',
+      gradient: 'from-amber-500/10 via-transparent to-transparent',
     },
     {
-      label: 'Draft Belum Difinalisasi',
+      label: 'Draft Pending',
+      sublabel: 'Menunggu finalisasi',
       value: stats.totalDraft,
-      sublabel: 'Menunggu review & approval',
       icon: Clock,
-      iconColor: 'text-purple-400',
-      iconBg: 'bg-purple-500/10 border-purple-500/20',
-      accentColor: 'from-purple-500/10 to-transparent',
+      iconColor: 'text-violet-400',
+      iconBg: 'bg-violet-500/10 border-violet-500/20',
+      gradient: 'from-violet-500/10 via-transparent to-transparent',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
       {cards.map((card, idx) => {
         const Icon = card.icon;
         return (
           <div
             key={idx}
-            className="relative overflow-hidden bg-[#181b21] border border-[#2a2f3a] rounded-2xl p-5 hover:border-slate-700 transition-all shadow-sm"
+            className="relative overflow-hidden bg-[#181b21] border border-[#2a2f3a] rounded-2xl p-3.5 sm:p-5 hover:border-slate-600 transition-all shadow-xs"
           >
+            {/* Background gradient */}
             <div
-              className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${card.accentColor} rounded-full blur-2xl pointer-events-none -mr-10 -mt-10`}
+              className={`absolute inset-0 bg-gradient-to-br ${card.gradient} pointer-events-none`}
             />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-400">{card.label}</p>
-                <h3 className="text-2xl font-bold text-white mt-1.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-1">{card.sublabel}</p>
+
+            <div className="relative flex flex-col justify-between h-full gap-3">
+              {/* Icon + Label */}
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs sm:text-sm font-semibold text-slate-300 leading-tight">
+                  {card.label}
+                </p>
+                <div
+                  className={`p-2 sm:p-2.5 rounded-xl border shrink-0 ${card.iconBg} ${card.iconColor}`}
+                >
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
               </div>
-              <div
-                className={`p-3 rounded-xl border ${card.iconBg} ${card.iconColor} shrink-0`}
-              >
-                <Icon className="w-5 h-5" />
+
+              {/* Value + Sublabel */}
+              <div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-none">
+                    {card.value}
+                  </span>
+                  {card.unit && (
+                    <span className="text-xs sm:text-sm font-semibold text-slate-400">
+                      {card.unit}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] sm:text-xs text-slate-400 mt-1 sm:mt-1.5 leading-snug line-clamp-1">
+                  {card.sublabel}
+                </p>
               </div>
             </div>
           </div>
