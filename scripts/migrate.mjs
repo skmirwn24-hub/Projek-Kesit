@@ -105,10 +105,16 @@ async function run() {
     const isOnly010 = filterArg === '010' || filterArg === '010_jadwal_pelatih';
     const isOnly011 = filterArg === '011' || filterArg === '011_manajemen_keuangan';
     const isOnly012 = filterArg === '012' || filterArg === '012_laporan_siswa';
+    const isOnly013 = filterArg === '013' || filterArg === '013_fix_laporan_siswa_security';
 
     const steps = [];
 
-    if (isOnly012) {
+    if (isOnly013) {
+      steps.push({
+        name: 'Migrasi 013: Fix Security Laporan Siswa (013_fix_laporan_siswa_security.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '013_fix_laporan_siswa_security.sql'),
+      });
+    } else if (isOnly012) {
       steps.push({
         name: 'Migrasi 012: Laporan Siswa & Rapor Evaluasi (012_laporan_siswa.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '012_laporan_siswa.sql'),
@@ -187,6 +193,10 @@ async function run() {
       steps.push({
         name: 'Migrasi 012: Laporan Siswa & Rapor Evaluasi (012_laporan_siswa.sql)',
         path: path.join(rootDir, 'supabase', 'migrations', '012_laporan_siswa.sql'),
+      });
+      steps.push({
+        name: 'Migrasi 013: Fix Security Laporan Siswa (013_fix_laporan_siswa_security.sql)',
+        path: path.join(rootDir, 'supabase', 'migrations', '013_fix_laporan_siswa_security.sql'),
       });
     }
 
