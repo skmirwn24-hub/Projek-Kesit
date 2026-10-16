@@ -38,5 +38,5 @@ export const simpanLaporanSchema = z.object({
   }),
 });
 
-export type SimpanLaporanInput = z.infer<typeof simpanLaporanSchema>;
+export type SimpanLaporanInput = z.input<typeof simpanLaporanSchema>;
 export type DetailEvaluasiInput = z.infer<typeof detailEvaluasiInputSchema>;
