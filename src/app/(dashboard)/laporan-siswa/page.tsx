@@ -260,16 +260,18 @@ Silakan hubungi staf/pelatih untuk mendapatkan berkas cetak resmi Rapor & Sertif
     }
   };
 
-  const isFiltered = useMemo(() => {
-    return (
-      search !== '' ||
-      filterDokumen !== 'ALL' ||
-      filterKenaikan !== 'ALL' ||
-      filterLevel !== 'ALL' ||
-      filterBulan !== '0' ||
-      filterPelatih !== 'ALL'
-    );
+  const activeFilterCount = useMemo(() => {
+    return [
+      search !== '',
+      filterDokumen !== 'ALL',
+      filterKenaikan !== 'ALL',
+      filterLevel !== 'ALL',
+      filterBulan !== '0',
+      filterPelatih !== 'ALL',
+    ].filter(Boolean).length;
   }, [search, filterDokumen, filterKenaikan, filterLevel, filterBulan, filterPelatih]);
+
+  const isFiltered = activeFilterCount > 0;
 
   return (
     <div className="min-h-screen bg-[#0f1115] text-slate-100 flex flex-col">
@@ -280,142 +282,138 @@ Silakan hubungi staf/pelatih untuk mendapatkan berkas cetak resmi Rapor & Sertif
         ]}
       />
 
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
-        {/* Header Title & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
-                <FileText className="w-5 h-5" />
-              </span>
-              Rapor & Laporan Perkembangan Siswa
-            </h1>
-            <p className="text-xs text-slate-400 mt-1">
-              Evaluasi berkala kompetensi teknik renang, kenaikan tingkat, dan penerbitan sertifikat resmi KESIT.
-            </p>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-5">
+
+        {/* ── Header ───────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 shrink-0">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-tight">
+                Rapor &amp; Laporan Siswa
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-400 mt-0.5 leading-snug">
+                Evaluasi berkala teknik renang, kenaikan tingkat &amp; sertifikat resmi KESIT.
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={loadData}
               disabled={loading}
-              className="border-[#2b303c] text-slate-300 hover:text-white text-xs gap-1.5"
+              className="border-[#2b303c] text-slate-300 hover:text-white text-xs sm:text-sm gap-1.5 h-10 px-3.5"
               title="Segarkan Data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Segarkan
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Segarkan</span>
             </Button>
-
             <Button
               size="sm"
               onClick={handleCreateNew}
-              className="bg-sky-500 hover:bg-sky-600 text-white text-xs gap-1.5 shadow-sm"
+              className="bg-sky-500 hover:bg-sky-600 text-white text-xs sm:text-sm font-semibold gap-1.5 h-10 px-4 flex-1 sm:flex-initial shadow-xs justify-center"
             >
               <Plus className="w-4 h-4" />
-              Buat Rapor Siswa
+              <span>Buat Rapor Baru</span>
             </Button>
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* ── Stats Cards ──────────────────────────────────────────────── */}
         <LaporanStatsCards stats={stats} />
 
-        {/* Filters Toolbar */}
-        <div className="bg-[#181a20] border border-[#272b35] rounded-2xl p-4 space-y-3 shadow-sm">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <Filter className="w-3.5 h-3.5 text-sky-400" />
-              <span>Filter & Pencarian Rapor</span>
+        {/* ── Filter Toolbar ───────────────────────────────────────────── */}
+        <div className="bg-[#181a20] border border-[#272b35] rounded-2xl overflow-hidden shadow-sm">
+          {/* Filter Header */}
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#272b35]">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+              <Filter className="w-4 h-4 text-sky-400" />
+              <span>Filter &amp; Pencarian</span>
+              {isFiltered && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 text-[10px] font-bold">
+                  {activeFilterCount}
+                </span>
+              )}
             </div>
-
             {isFiltered && (
               <button
                 type="button"
                 onClick={handleResetFilter}
-                className="text-[11px] text-sky-400 hover:text-sky-300 flex items-center gap-1 transition-colors"
+                className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors font-medium"
               >
-                <RotateCcw className="w-3 h-3" />
-                Reset Filter
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset
               </button>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {/* Filter Fields */}
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             {/* Search */}
-            <div className="relative lg:col-span-2">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative sm:col-span-2 lg:col-span-2">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
-                placeholder="Cari siswa, ID, no rapor..."
+                placeholder="Cari siswa, ID, no. rapor..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 text-xs bg-[#131519]"
+                className="pl-9 text-sm bg-[#131519] h-10"
               />
             </div>
 
             {/* Status Dokumen */}
-            <div>
-              <Select
-                value={filterDokumen}
-                onChange={(e) => setFilterDokumen(e.target.value)}
-                className="text-xs bg-[#131519]"
-              >
-                <option value="ALL">Semua Dokumen</option>
-                <option value="Draft">Draft (Review)</option>
-                <option value="Final">Final (Resmi)</option>
-                <option value="Terkirim">Terkirim ke Wali</option>
-              </Select>
-            </div>
+            <Select
+              value={filterDokumen}
+              onChange={(e) => setFilterDokumen(e.target.value)}
+              className="text-sm bg-[#131519] h-10"
+            >
+              <option value="ALL">Semua Status</option>
+              <option value="Draft">Draft</option>
+              <option value="Final">Final</option>
+              <option value="Terkirim">Terkirim</option>
+            </Select>
 
             {/* Status Kenaikan */}
-            <div>
-              <Select
-                value={filterKenaikan}
-                onChange={(e) => setFilterKenaikan(e.target.value)}
-                className="text-xs bg-[#131519]"
-              >
-                <option value="ALL">Semua Kenaikan</option>
-                <option value="Bertahan">Bertahan</option>
-                <option value="Naik Level">Naik Level</option>
-                <option value="Lulus Tingkat">Lulus Tingkat</option>
-              </Select>
-            </div>
+            <Select
+              value={filterKenaikan}
+              onChange={(e) => setFilterKenaikan(e.target.value)}
+              className="text-sm bg-[#131519] h-10"
+            >
+              <option value="ALL">Semua Kenaikan</option>
+              <option value="Bertahan">Bertahan</option>
+              <option value="Naik Level">Naik Level</option>
+              <option value="Lulus Tingkat">Lulus Tingkat</option>
+            </Select>
 
             {/* Level Renang */}
-            <div>
-              <Select
-                value={filterLevel}
-                onChange={(e) => setFilterLevel(e.target.value)}
-                className="text-xs bg-[#131519]"
-              >
-                <option value="ALL">Semua Jenjang</option>
-                {DAFTAR_LEVEL_RENANG.map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    {lvl}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <Select
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value)}
+              className="text-sm bg-[#131519] h-10"
+            >
+              <option value="ALL">Semua Jenjang</option>
+              {DAFTAR_LEVEL_RENANG.map((lvl) => (
+                <option key={lvl} value={lvl}>{lvl}</option>
+              ))}
+            </Select>
 
             {/* Periode Bulan */}
-            <div>
-              <Select
-                value={filterBulan}
-                onChange={(e) => setFilterBulan(e.target.value)}
-                className="text-xs bg-[#131519]"
-              >
-                {BULAN_OPTIONS.map((b) => (
-                  <option key={b.value} value={b.value}>
-                    {b.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            <Select
+              value={filterBulan}
+              onChange={(e) => setFilterBulan(e.target.value)}
+              className="text-sm bg-[#131519] h-10"
+            >
+              {BULAN_OPTIONS.map((b) => (
+                <option key={b.value} value={b.value}>{b.label}</option>
+              ))}
+            </Select>
           </div>
         </div>
 
-        {/* Laporan Table */}
+        {/* ── Tabel / Card List ────────────────────────────────────────── */}
         <LaporanTable
           list={list}
           loading={loading}
@@ -469,21 +467,21 @@ Silakan hubungi staf/pelatih untuk mendapatkan berkas cetak resmi Rapor & Sertif
           subtitle="Tindakan ini tidak dapat dibatalkan"
           maxWidth="sm"
         >
-          <div className="p-6 space-y-4">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
-              <span>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3.5 sm:p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+              <p className="text-xs sm:text-sm leading-relaxed">
                 Apakah Anda yakin ingin menghapus arsip rapor ini? Seluruh rincian nilai teknik dan sertifikat terkait akan dihapus secara permanen.
-              </span>
+              </p>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setDeleteId(null)}
                 disabled={isDeleting}
-                className="text-xs"
+                className="text-xs sm:text-sm h-9 px-3 text-slate-300"
               >
                 Batal
               </Button>
@@ -491,7 +489,7 @@ Silakan hubungi staf/pelatih untuk mendapatkan berkas cetak resmi Rapor & Sertif
                 size="sm"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="bg-rose-500 hover:bg-rose-600 text-white text-xs gap-1.5"
+                className="bg-rose-500 hover:bg-rose-600 text-white text-xs sm:text-sm font-semibold gap-1.5 h-9 px-3.5 shadow-xs"
               >
                 {isDeleting ? 'Menghapus...' : 'Ya, Hapus Rapor'}
               </Button>
