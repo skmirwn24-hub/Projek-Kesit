@@ -143,8 +143,8 @@ export function FormPenilaianModal({
   const handleSiswaChange = (id: string) => {
     setSiswaId(id);
     const chosen = siswaOptions.find((s) => s.id === id);
-    if (chosen?.pelatih_id) {
-      setPelatihId(chosen.pelatih_id);
+    if (chosen?.pelatih_pemilik_id) {
+      setPelatihId(chosen.pelatih_pemilik_id);
     }
   };
 
@@ -166,7 +166,7 @@ export function FormPenilaianModal({
     setEvaluasiList((prev) => [
       ...prev,
       {
-        kategori_teknik: 'Gaya Bebas (Crawl)',
+        kategori_teknik: 'Gaya Bebas',
         skor_posisi_tubuh: 3.0,
         skor_gerakan_kaki: 3.0,
         skor_gerakan_tangan: 3.0,
@@ -216,7 +216,7 @@ export function FormPenilaianModal({
     setIsSubmitting(true);
     try {
       const res = await submitLaporanAction({
-        laporanId: editData?.laporan.id,
+        laporan_id: editData?.laporan.id,
         siswa_id: siswaId,
         pelatih_id: pelatihId,
         periode_bulan: parseInt(periodeBulan, 10),
@@ -226,9 +226,10 @@ export function FormPenilaianModal({
         rekomendasi_level: rekomendasiLevel,
         status_kenaikan: statusKenaikan,
         status_dokumen: targetStatus,
+        catatan_umum: catatanPelatih,
         catatan_pelatih: catatanPelatih,
         catatan_head_coach: catatanHeadCoach,
-        details: evaluasiList,
+        detail_evaluasi: evaluasiList,
       });
 
       if (!res.success) {
@@ -284,7 +285,7 @@ export function FormPenilaianModal({
                 <option value="">-- Pilih Siswa --</option>
                 {siswaOptions.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.nama} ({s.id_siswa}) - {s.kelas || 'Reguler'}
+                    {s.nama_lengkap} ({s.id_siswa}) - {s.kelas || 'Reguler'}
                   </option>
                 ))}
               </Select>
